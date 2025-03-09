@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hızlı Video Üretici</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #ff6b6b, #ffa1a1, #ffc6c6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-gradient {
+            background: linear-gradient(90deg, #ff6b6b, #ffc6c6);
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center mb-6">
+            <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Ana Sayfa
+            </a>
+        </div>
+
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Video Üretici</h1>
+            <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli videolar oluşturun. İşte sizin için oluşturduğumuz video!</p>
+        </header>
+
+        <div class="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+            <div class="p-6">
+                <div id="videoResult" class="mt-8">
+                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Video</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <video id="generatedVideo" controls autoplay loop class="w-full rounded-lg shadow-lg">
+                            <source src="{{ video_url }}" type="video/mp4">
+                            Tarayıcınız video etiketini desteklemiyor.
+                        </video>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
+                        <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ prompt }}</p>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
+                        <p id="brandInfo" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ brand }}</p>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <a id="downloadBtn" href="{{ video_url }}" download class="inline-block py-3 px-6 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg shadow-lg hover:from-green-600 hover:to-teal-600 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                            Videoyu İndir
+                        </a>
+                        <a href="{{ url_for('index') }}" class="inline-block ml-4 py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                            Yeni Video Oluştur
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>© 2024 Hızlı Video Üretici | AI Destekli Video Üretim Aracı</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Video yüklendiğinde
+            const video = document.getElementById('generatedVideo');
+            video.addEventListener('error', function() {
+                alert('Video yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+            });
+        });
+    </script>
+</body>
+</html> 
