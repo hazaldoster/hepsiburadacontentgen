@@ -87,3 +87,4 @@ hs_err_pid*
 target/
 .gradle/
 build/ 
+.vercel
