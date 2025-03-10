@@ -11,7 +11,14 @@ import logging
 import socket
 import urllib3
 import traceback
-import fal_client  # Fal.ai client kütüphanesini içe aktar
+
+# Fal.ai client kütüphanesini içe aktar - hata yönetimi ile
+try:
+    import fal_client
+    FAL_CLIENT_AVAILABLE = True
+except ImportError:
+    FAL_CLIENT_AVAILABLE = False
+    logging.warning("fal_client kütüphanesi yüklenemedi. Video oluşturma özellikleri devre dışı olacak.")
 
 # Loglama yapılandırması
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -339,6 +346,11 @@ def generate_video():
     if not prompt:
         return jsonify({"error": "Geçersiz prompt seçimi"}), 400
     
+    # Fal.ai client'ın kullanılabilir olup olmadığını kontrol et
+    if not FAL_CLIENT_AVAILABLE:
+        logger.error("fal_client kütüphanesi yüklü değil. Video oluşturulamıyor.")
+        return jsonify({"error": "Video oluşturma özelliği şu anda kullanılamıyor. Sunucu yapılandırması eksik."}), 500
+    
     try:
         logger.info(f"Fal.ai API'sine video oluşturma isteği gönderiliyor")
         logger.info(f"Kullanılan prompt: {prompt[:50]}...")  # İlk 50 karakteri logla
@@ -503,6 +515,11 @@ def video():
 @app.route('/check_status/<request_id>')
 def check_status(request_id):
     """İstek durumunu kontrol etmek için API endpoint'i"""
+    # Fal.ai client'ın kullanılabilir olup olmadığını kontrol et
+    if not FAL_CLIENT_AVAILABLE:
+        logger.error("fal_client kütüphanesi yüklü değil. Durum kontrolü yapılamıyor.")
+        return jsonify({"error": "Durum kontrolü özelliği şu anda kullanılamıyor. Sunucu yapılandırması eksik."}), 500
+        
     try:
         logger.info(f"İstek durumu kontrol ediliyor (ID: {request_id})...")
         status = fal_client.status("fal-ai/veo2", request_id, with_logs=True)
