@@ -11,27 +11,43 @@ import logging
 import socket
 import urllib3
 import traceback
+import sys
+
+# Configure logging first
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Log Python version and environment
+logger.info(f"Python version: {sys.version}")
+logger.info(f"Environment: {os.environ.get('VERCEL_ENV', 'local')}")
 
 # Fal.ai client kütüphanesini içe aktar - hata yönetimi ile
 try:
     import fal_client
     FAL_CLIENT_AVAILABLE = True
-except ImportError:
+    logger.info("fal_client kütüphanesi başarıyla yüklendi.")
+except ImportError as e:
     FAL_CLIENT_AVAILABLE = False
-    logging.warning("fal_client kütüphanesi yüklenemedi. Video oluşturma özellikleri devre dışı olacak.")
-
-# Loglama yapılandırması
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+    logger.warning(f"fal_client kütüphanesi yüklenemedi: {str(e)}. Video oluşturma özellikleri devre dışı olacak.")
 
 # DNS çözümleme zaman aşımını artır
 socket.setdefaulttimeout(30)  # 30 saniye
 
 # Bağlantı havuzu yönetimi
-urllib3.PoolManager(retries=urllib3.Retry(total=5, backoff_factor=0.5))
+try:
+    urllib3.PoolManager(retries=urllib3.Retry(total=5, backoff_factor=0.5))
+    logger.info("urllib3 PoolManager başarıyla yapılandırıldı.")
+except Exception as e:
+    logger.warning(f"urllib3 PoolManager yapılandırılırken hata: {str(e)}")
 
-load_dotenv()
+# Load environment variables
+try:
+    load_dotenv()
+    logger.info("Çevre değişkenleri yüklendi.")
+except Exception as e:
+    logger.warning(f"Çevre değişkenleri yüklenirken hata: {str(e)}")
 
+# Initialize Flask app
 app = Flask(__name__)
 
 # API anahtarları
@@ -41,27 +57,59 @@ ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 ASTRIA_API_URL = os.getenv("ASTRIA_API_URL")
 ASTRIA_API_KEY = os.getenv("ASTRIA_API_KEY")
 
+# Log API key availability (not the actual keys)
+logger.info(f"OPENAI_API_KEY mevcut: {bool(OPENAI_API_KEY)}")
+logger.info(f"FAL_API_KEY mevcut: {bool(FAL_API_KEY)}")
+logger.info(f"ASTRIA_API_KEY mevcut: {bool(ASTRIA_API_KEY)}")
+
 # Fal.ai API yapılandırması - FAL_KEY çevre değişkenini ayarla
-os.environ["FAL_KEY"] = FAL_API_KEY
-logger.info(f"FAL_KEY çevre değişkeni ayarlandı: {FAL_API_KEY[:8]}...")
+if FAL_API_KEY:
+    os.environ["FAL_KEY"] = FAL_API_KEY
+    logger.info(f"FAL_KEY çevre değişkeni ayarlandı: {FAL_API_KEY[:4]}..." if FAL_API_KEY else "FAL_KEY ayarlanamadı")
+else:
+    logger.warning("FAL_API_KEY bulunamadı, FAL_KEY çevre değişkeni ayarlanamadı.")
 
 # OpenAI istemcisini yapılandır
+client = None
 try:
-    # OpenAI API anahtarını doğrudan ayarla
-    openai.api_key = OPENAI_API_KEY
-    
-    # OpenAI istemcisini oluştur
-    client = OpenAI(
-        api_key=OPENAI_API_KEY,
-    )
-    
-    # API bağlantısını test et
-    logger.info("OpenAI API bağlantısı test ediliyor...")
-    models = client.models.list()
-    logger.info(f"OpenAI API bağlantısı başarılı. Kullanılabilir model sayısı: {len(models.data)}")
+    if OPENAI_API_KEY:
+        # OpenAI API anahtarını doğrudan ayarla
+        openai.api_key = OPENAI_API_KEY
+        
+        # OpenAI istemcisini oluştur
+        client = OpenAI(
+            api_key=OPENAI_API_KEY,
+        )
+        
+        # API bağlantısını test et
+        logger.info("OpenAI API bağlantısı test ediliyor...")
+        models = client.models.list()
+        logger.info(f"OpenAI API bağlantısı başarılı. Kullanılabilir model sayısı: {len(models.data)}")
+    else:
+        logger.warning("OPENAI_API_KEY bulunamadı, OpenAI istemcisi oluşturulamadı.")
 except Exception as e:
     logger.error(f"OpenAI API bağlantısı kurulamadı: {str(e)}")
     logger.error(f"Hata izleme: {traceback.format_exc()}")
+
+# Ensure templates directory exists
+template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+if not os.path.exists(template_dir):
+    logger.warning(f"Templates directory not found at {template_dir}. Creating it.")
+    try:
+        os.makedirs(template_dir, exist_ok=True)
+    except Exception as e:
+        logger.error(f"Failed to create templates directory: {str(e)}")
+
+# Create basic templates if they don't exist
+for template_name in ['welcome.html', 'index.html', 'image.html', 'video.html']:
+    template_path = os.path.join(template_dir, template_name)
+    if not os.path.exists(template_path):
+        logger.warning(f"Template {template_name} not found. Creating a basic version.")
+        try:
+            with open(template_path, 'w') as f:
+                f.write(f"<!DOCTYPE html><html><head><title>{template_name}</title></head><body><h1>{template_name}</h1><p>This is a placeholder template.</p></body></html>")
+        except Exception as e:
+            logger.error(f"Failed to create template {template_name}: {str(e)}")
 
 def detect_style(text: str, feature_type: str) -> str:
     """
@@ -899,6 +947,32 @@ def check_image_status(prompt_id):
     except Exception as e:
         logger.error(f"Durum kontrolü hatası: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+# Add error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    logger.error(f"404 error: {str(e)}")
+    return render_template('error.html', error="Page not found"), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    logger.error(f"500 error: {str(e)}")
+    return render_template('error.html', error="Internal server error"), 500
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to check environment variables and configuration"""
+    debug_info = {
+        "python_version": sys.version,
+        "environment": os.environ.get('VERCEL_ENV', 'local'),
+        "openai_api_key_exists": bool(OPENAI_API_KEY),
+        "fal_api_key_exists": bool(FAL_API_KEY),
+        "astria_api_key_exists": bool(ASTRIA_API_KEY),
+        "fal_client_available": FAL_CLIENT_AVAILABLE,
+        "template_dir_exists": os.path.exists(template_dir),
+        "templates": [f for f in os.listdir(template_dir) if os.path.isfile(os.path.join(template_dir, f))] if os.path.exists(template_dir) else []
+    }
+    return jsonify(debug_info)
 
 if __name__ == '__main__':
     logger.info("Uygulama başlatılıyor...")
