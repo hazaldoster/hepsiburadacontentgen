@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoLoading = document.getElementById('videoLoading');
     
     let brandInput = '';
+    let selectedPromptCard = null; // Seçilen prompt kartını takip etmek için değişken
+    
+    // Prompt kartını seçili olarak işaretleyen fonksiyon
+    function selectPromptCard(card) {
+        // Önceki seçili kartı temizle
+        if (selectedPromptCard) {
+            selectedPromptCard.classList.remove('selected');
+        }
+        
+        // Yeni kartı seç
+        card.classList.add('selected');
+        selectedPromptCard = card;
+    }
     
     brandForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -17,18 +30,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Seçilen aspect ratio değerini al
-        const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
-        
         // Eski promptları ve video sonuçlarını gizle
         promptResults.classList.add('hidden');
         if (document.getElementById('videoResult')) {
             document.getElementById('videoResult').classList.add('hidden');
         }
         promptContainer.innerHTML = ''; // Eski promptları temizle
+        selectedPromptCard = null; // Seçili prompt kartını sıfırla
         
         // Promptları oluşturma işlemi
-        // brandForm.classList.add('hidden'); // Formu gizleme
         loadingPrompts.classList.remove('hidden');
         
         // Yeni API endpoint'ine istek at
@@ -53,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.error) {
                 alert('Hata: ' + data.error);
-                // brandForm.classList.remove('hidden');
                 return;
             }
             
@@ -83,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 4 promptu göster
                 promptDataToShow.forEach((promptItem, index) => {
                     const promptCard = document.createElement('div');
-                    promptCard.className = 'bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
+                    promptCard.className = 'prompt-card bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
                     
                     // Prompt ID'si oluştur
                     const promptId = `prompt-${index}`;
@@ -93,9 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     promptCard.innerHTML = `
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="font-medium text-purple-300">Stil: ${promptItem.style}</h3>
-                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
-                                Düzenle
-                            </button>
+                            <div class="flex space-x-2">
+                                <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Düzenle
+                                </button>
+                                <button class="generate-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Oluştur
+                                </button>
+                            </div>
                         </div>
                         <div class="prompt-content" id="${promptId}">
                             <p class="text-gray-300">${promptItem.prompt}</p>
@@ -120,7 +134,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Prompt kartına tıklama olayı ekle
                         const promptContent = promptCard.querySelector(`#${promptId}`);
                         promptContent.addEventListener('click', function() {
-                            generateVideo(promptItem.prompt, data.input_text, aspectRatio);
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Şimdilik sadece seçim yapılsın, video oluşturma işlemi yapılmasın
                         });
                         
                         // Düzenle butonuna tıklama olayı ekle
@@ -153,6 +172,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             textarea.value = promptItem.prompt;
                         });
                         
+                        // Oluştur butonuna tıklama olayı ekle
+                        const generateBtn = promptCard.querySelector('.generate-btn');
+                        generateBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Video oluştur
+                            generateVideo(promptItem.prompt, data.input_text, aspectRatio);
+                        });
+                        
                         // Kaydet butonuna tıklama olayı ekle
                         const saveBtn = promptCard.querySelector('.save-btn');
                         saveBtn.addEventListener('click', function(e) {
@@ -180,8 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             } else if (data.prompts && data.prompts.length > 0) {
-                // Eski format için geriye dönük uyumluluk
-                // Maksimum 4 prompt göster
+                // Eski format için destek - maksimum 4 prompt göster
                 const promptsToShow = data.prompts.slice(0, 4);
                 
                 // Eğer 4'ten az prompt varsa, eksik olanları boş prompt ile doldur
@@ -189,10 +221,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     promptsToShow.push("Bu prompt için içerik oluşturulamadı.");
                 }
                 
-                // 4 promptu göster
                 promptsToShow.forEach((prompt, index) => {
                     const promptCard = document.createElement('div');
-                    promptCard.className = 'bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
+                    promptCard.className = 'prompt-card bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
                     
                     // Prompt ID'si oluştur
                     const promptId = `prompt-${index}`;
@@ -202,9 +233,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     promptCard.innerHTML = `
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="font-medium text-purple-300">Prompt ${index + 1}</h3>
-                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
-                                Düzenle
-                            </button>
+                            <div class="flex space-x-2">
+                                <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Düzenle
+                                </button>
+                                <button class="generate-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Oluştur
+                                </button>
+                            </div>
                         </div>
                         <div class="prompt-content" id="${promptId}">
                             <p class="text-gray-300">${prompt}</p>
@@ -229,7 +265,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Prompt kartına tıklama olayı ekle
                         const promptContent = promptCard.querySelector(`#${promptId}`);
                         promptContent.addEventListener('click', function() {
-                            generateVideo(promptsToShow[index], data.input_text, aspectRatio);
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Şimdilik sadece seçim yapılsın, video oluşturma işlemi yapılmasın
                         });
                         
                         // Düzenle butonuna tıklama olayı ekle
@@ -260,6 +301,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Textarea içeriğini orijinal prompt ile değiştir
                             const textarea = promptEdit.querySelector('textarea');
                             textarea.value = promptsToShow[index];
+                        });
+                        
+                        // Oluştur butonuna tıklama olayı ekle
+                        const generateBtn = promptCard.querySelector('.generate-btn');
+                        generateBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Video oluştur
+                            generateVideo(promptsToShow[index], data.input_text, aspectRatio);
                         });
                         
                         // Kaydet butonuna tıklama olayı ekle
@@ -300,19 +355,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Form'u tekrar göster
                 setTimeout(() => {
                     promptResults.classList.add('hidden');
-                    // brandForm.classList.remove('hidden');
                 }, 3000);
             }
+            
+            // Aspect ratio seçimini güncelle
+            updateSelectedAspectRatio();
         })
         .catch(error => {
             loadingPrompts.classList.add('hidden');
-            // brandForm.classList.remove('hidden');
             console.error('API hatası:', error);
             alert('Bir hata oluştu: ' + error.message);
         });
     });
     
     function generateVideo(prompt, brandInput, aspectRatio) {
+        // Seçilen prompt ve aspect ratio ile video oluştur
         promptResults.classList.add('hidden'); // Prompt sonuçlarını gizle
         videoLoading.classList.remove('hidden');
         
@@ -350,4 +407,50 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Bir hata oluştu: ' + error.message);
         });
     }
+    
+    // Aspect ratio seçimi için
+    function updateSelectedAspectRatio() {
+        const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+        const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+        
+        aspectRatioOptions.forEach(option => {
+            const input = option.querySelector('input');
+            if (input.checked) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+        
+        // Her bir radio input için event listener ekle
+        aspectRatioInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                aspectRatioOptions.forEach(option => {
+                    const optionInput = option.querySelector('input');
+                    if (optionInput.checked) {
+                        option.classList.add('selected');
+                    } else {
+                        option.classList.remove('selected');
+                    }
+                });
+            });
+        });
+    }
+    
+    // Sayfada "Oluştur" butonuna tıklandığında seçili prompt ile video oluştur
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('create-video-btn')) {
+            if (!selectedPromptCard) {
+                alert('Lütfen önce bir prompt seçin');
+                return;
+            }
+            
+            // Seçilen prompt ve aspect ratio ile video oluştur
+            const promptContent = selectedPromptCard.querySelector('.prompt-content p');
+            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+            const brandInputValue = document.getElementById('brandInput').value;
+            
+            generateVideo(promptContent.textContent, brandInputValue, aspectRatio);
+        }
+    });
 }); 

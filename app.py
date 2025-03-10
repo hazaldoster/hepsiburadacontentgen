@@ -110,7 +110,7 @@ def detect_style(text: str, feature_type: str) -> str:
         logger.error(f"Hata izleme: {traceback.format_exc()}")
         raise ValueError(f"Stil belirlenirken hata: {str(e)}")
 
-def generate_prompt(text: str, feature_type: str) -> dict:
+def generate_prompt(text: str, feature_type: str, aspect_ratio: str = "1:1") -> dict:
     """
     OpenAI chat completion API kullanarak doğrudan prompt oluşturur.
     Her bir prompt için ayrı stil belirler.
@@ -118,11 +118,22 @@ def generate_prompt(text: str, feature_type: str) -> dict:
     if feature_type not in ["image", "video"]:
         raise ValueError("Geçersiz feature_type! 'image' veya 'video' olmalıdır.")
     
-    logger.info(f"Prompt oluşturuluyor. Metin: {text[:50]}... Özellik tipi: {feature_type}")
+    logger.info(f"Prompt oluşturuluyor. Metin: {text[:50]}... Özellik tipi: {feature_type}, Aspect Ratio: {aspect_ratio}")
     
     try:
         # Feature type değerini uygun formata dönüştür
         prompt_type = "image" if feature_type == "image" else "video"
+        
+        # Aspect ratio açıklaması
+        aspect_ratio_desc = ""
+        if aspect_ratio == "1:1":
+            aspect_ratio_desc = "square format (1:1)"
+        elif aspect_ratio == "4:5":
+            aspect_ratio_desc = "portrait format for Instagram posts (4:5)"
+        elif aspect_ratio == "16:9":
+            aspect_ratio_desc = "landscape format for web/video (16:9)"
+        elif aspect_ratio == "9:16":
+            aspect_ratio_desc = "vertical format for stories/reels (9:16)"
         
         # Sistem talimatı - Her prompt için ayrı stil belirle
         system_instruction = f"""
@@ -131,11 +142,13 @@ def generate_prompt(text: str, feature_type: str) -> dict:
         Her prompt için farklı bir stil belirle ve her promptun başına stilini ekle.
         
         Kurallar:
-        1. Her prompt en az 20, en fazla 75 kelime olmalıdır.
+        1. Her prompt en az 45, en fazla 100 kelime olmalıdır.
         2. Her prompt farklı bir yaklaşım ve stil sunmalıdır.
         3. Promptlar doğrudan {prompt_type} oluşturmak için kullanılabilir olmalıdır.
         4. Her prompt için farklı ve marka kimliğine uygun bir stil belirle.
         5. Promptlar mutlaka ingilizce olmalıdır.
+        6. Promptlar {aspect_ratio_desc} için optimize edilmelidir.
+        7. Promptlarda girilen markanın ürününün özelliklerini referans alacak metaforik ifadeler kullanılacaktır.
         
         Yanıtın şu formatta olmalıdır:
         
@@ -158,7 +171,7 @@ def generate_prompt(text: str, feature_type: str) -> dict:
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_instruction},
-                {"role": "user", "content": f"Metin: {text}\nTür: {feature_type}"}
+                {"role": "user", "content": f"Metin: {text}\nTür: {feature_type}\nAspect Ratio: {aspect_ratio}"}
             ],
             temperature=0.5,
             max_tokens=1000
@@ -191,7 +204,7 @@ def generate_prompt(text: str, feature_type: str) -> dict:
             logger.warning("Hiç prompt bulunamadı, metni doğrudan kullanıyoruz")
             prompt_data.append({
                 "style": "default",
-                "prompt": text
+                "prompt": f"{text} {aspect_ratio} aspect ratio"
             })
         
         # Eğer 4'ten az prompt varsa, eksik olanları doldur
@@ -207,6 +220,7 @@ def generate_prompt(text: str, feature_type: str) -> dict:
         return {
             "input_text": text,
             "feature_type": feature_type,
+            "aspect_ratio": aspect_ratio,
             "prompt_data": prompt_data
         }
         
@@ -305,12 +319,13 @@ def generate_prompt_api():
     data = request.json
     text = data.get("text")
     feature_type = data.get("feature_type")
+    aspect_ratio = data.get("aspect_ratio", "1:1")  # Varsayılan olarak 1:1
     
     if not text or not feature_type:
         return jsonify({"error": "Missing required parameters: 'text' and 'feature_type'"}), 400
     
     try:
-        result = generate_prompt(text, feature_type)
+        result = generate_prompt(text, feature_type, aspect_ratio)
         return jsonify(result)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -535,30 +550,48 @@ def generate_image():
         request_id = str(uuid.uuid4())
         logger.info(f"Oluşturulan istek ID: {request_id}")
         
-        # Varsayılan boyut olarak 896x1152 kullan
-        width, height = 896, 1152  # Varsayılan değerler
-        
-        # Aspect ratio'ya göre boyutları ayarla, ancak toplam piksel sayısını yaklaşık olarak koru
+        # Astria AI dokümantasyonuna göre boyutları ayarla
+        # Boyutlar 8'in katları olmalıdır
         if aspect_ratio == "1:1":
-            width, height = 1024, 1024
+            width, height = 1024, 1024  # Kare format
         elif aspect_ratio == "4:5":
-            width, height = 896, 1120
+            width, height = 1024, 1280  # Instagram post formatı
         elif aspect_ratio == "16:9":
-            width, height = 1216, 684
+            width, height = 1280, 720  # Yatay video/web formatı
         elif aspect_ratio == "9:16":
-            width, height = 896, 1152  # Varsayılan boyut
+            width, height = 720, 1280  # Dikey story formatı
+        else:
+            # Varsayılan olarak 1:1 kullan
+            width, height = 1024, 1024
+            logger.warning(f"Bilinmeyen aspect ratio: {aspect_ratio}, varsayılan 1:1 kullanılıyor")
         
         logger.info(f"Kullanılan görsel boyutu: {width}x{height}")
         
+        # Prompt'a aspect ratio bilgisini ekle ve optimize et
+        # Astria AI dokümantasyonuna göre prompt'u düzenle
+        aspect_ratio_prompt = ""
+        if aspect_ratio == "1:1":
+            aspect_ratio_prompt = "square format, 1:1 aspect ratio"
+        elif aspect_ratio == "4:5":
+            aspect_ratio_prompt = "portrait format, 4:5 aspect ratio, vertical composition"
+        elif aspect_ratio == "16:9":
+            aspect_ratio_prompt = "landscape format, 16:9 aspect ratio, horizontal composition"
+        elif aspect_ratio == "9:16":
+            aspect_ratio_prompt = "vertical format, 9:16 aspect ratio, portrait composition"
+        
+        enhanced_prompt = f"{prompt}, {aspect_ratio_prompt}, high quality, detailed"
+        logger.info(f"Geliştirilmiş prompt: {enhanced_prompt[:100]}...")
+        
         # Astria AI API isteği için form data hazırla
+        # Dokümantasyona göre parametreleri ayarla
         data = {
-            'prompt[text]': prompt,
-            'prompt[width]': str(width),
-            'prompt[height]': str(height),
-            'prompt[num_inference_steps]': "50",
-            'prompt[guidance_scale]': "7.5",
-            'prompt[seed]': "-1",  # Rastgele seed
-            'prompt[lora_scale]': "0.8"  # LoRA ağırlığı
+            'prompt[text]': enhanced_prompt,
+            'prompt[w]': str(width),
+            'prompt[h]': str(height),
+            'prompt[num_inference_steps]': "50",  # Daha yüksek kalite için 50 adım
+            'prompt[guidance_scale]': "7.5",      # Prompt'a uyum için 7.5 değeri
+            'prompt[seed]': "-1",                 # Rastgele seed
+            'prompt[lora_scale]': "0.8"           # LoRA ağırlığı
         }
         
         headers = {
@@ -755,6 +788,7 @@ def check_image_status(prompt_id):
         redirect_to_page = request.args.get('redirect', 'false').lower() == 'true'
         prompt = request.args.get('prompt', '')
         brand = request.args.get('brand', '')
+        aspect_ratio = request.args.get('aspect_ratio', '1:1')  # Aspect ratio bilgisini al
         
         # API bilgilerini al
         api_key = os.getenv("ASTRIA_API_KEY")
@@ -836,7 +870,8 @@ def check_image_status(prompt_id):
                     "image_urls": image_urls,  # Tüm görsel URL'leri
                     "prompt_id": prompt_id,
                     "prompt": prompt,
-                    "brand": brand
+                    "brand": brand,
+                    "aspect_ratio": aspect_ratio  # Aspect ratio bilgisini ekle
                 })
             except json.JSONDecodeError:
                 logger.error(f"Astria API yanıtı JSON formatında değil: {response.text[:100]}...")

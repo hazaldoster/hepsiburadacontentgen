@@ -32,6 +32,106 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
+        
+        /* Modern yükleme animasyonları */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        /* Video yükleme animasyonu */
+        .video-loader {
+            width: 120px;
+            height: 80px;
+            position: relative;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .video-loader:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(139, 92, 246, 0.2),
+                rgba(236, 72, 153, 0.4),
+                rgba(139, 92, 246, 0.2),
+                transparent
+            );
+            animation: loading 1.5s infinite;
+        }
+        
+        .video-loader:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #ec4899;
+            border-bottom-color: #8b5cf6;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes loading {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+        
+        /* Yükleme metni animasyonu */
+        .loading-text {
+            font-weight: 500;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 2s linear infinite;
+        }
+        
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+        
+        /* Video hata durumu */
+        .video-error {
+            width: 100%;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
@@ -55,10 +155,22 @@
                 <div id="videoResult" class="mt-8">
                     <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Video</h2>
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <video id="generatedVideo" controls autoplay loop class="w-full rounded-lg shadow-lg">
+                        <div id="videoLoading" class="loader-container">
+                            <div class="video-loader"></div>
+                            <p class="loading-text text-xl">Video yükleniyor...</p>
+                            <p class="text-gray-400 mt-2">Lütfen bekleyin, video hazırlanıyor</p>
+                        </div>
+                        <video id="generatedVideo" controls autoplay loop class="w-full rounded-lg shadow-lg hidden">
                             <source src="{{ video_url }}" type="video/mp4">
                             Tarayıcınız video etiketini desteklemiyor.
                         </video>
+                        <div id="videoError" class="video-error hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-xl font-medium text-red-400">Video yüklenemedi</p>
+                            <p class="text-gray-400 mt-2">Lütfen tekrar deneyin veya yeni bir video oluşturun</p>
+                        </div>
                     </div>
                     <div class="mt-4">
                         <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
@@ -87,11 +199,31 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Video yüklendiğinde
             const video = document.getElementById('generatedVideo');
-            video.addEventListener('error', function() {
-                alert('Video yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+            const videoLoading = document.getElementById('videoLoading');
+            const videoError = document.getElementById('videoError');
+            
+            // Video yüklendiğinde
+            video.addEventListener('loadeddata', function() {
+                videoLoading.classList.add('hidden');
+                video.classList.remove('hidden');
             });
+            
+            // Video yüklenme hatası
+            video.addEventListener('error', function() {
+                videoLoading.classList.add('hidden');
+                videoError.classList.remove('hidden');
+                console.error('Video yüklenirken bir hata oluştu');
+            });
+            
+            // 10 saniye sonra hala yüklenmemişse hata göster
+            setTimeout(function() {
+                if (video.readyState === 0) {
+                    videoLoading.classList.add('hidden');
+                    videoError.classList.remove('hidden');
+                    console.error('Video yükleme zaman aşımı');
+                }
+            }, 10000);
         });
     </script>
 </body>
