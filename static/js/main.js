@@ -20,6 +20,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Seçilen aspect ratio değerini al
         const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
         
+        // Eski promptları ve video sonuçlarını gizle
+        promptResults.classList.add('hidden');
+        if (document.getElementById('videoResult')) {
+            document.getElementById('videoResult').classList.add('hidden');
+        }
+        promptContainer.innerHTML = ''; // Eski promptları temizle
+        
         // Promptları oluşturma işlemi
         // brandForm.classList.add('hidden'); // Formu gizleme
         loadingPrompts.classList.remove('hidden');
@@ -306,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function generateVideo(prompt, brandInput, aspectRatio) {
-        // promptResults.classList.add('hidden'); // Prompt sonuçlarını gizleme
+        promptResults.classList.add('hidden'); // Prompt sonuçlarını gizle
         videoLoading.classList.remove('hidden');
         
         const formData = new FormData();

@@ -31,6 +31,8 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FAL_API_KEY = os.getenv("FAL_API_KEY")
 ASSISTANT_ID = os.getenv("ASSISTANT_ID")
+ASTRIA_API_URL = os.getenv("ASTRIA_API_URL")
+ASTRIA_API_KEY = os.getenv("ASTRIA_API_KEY")
 
 # Fal.ai API yapılandırması - FAL_KEY çevre değişkenini ayarla
 os.environ["FAL_KEY"] = FAL_API_KEY
@@ -132,7 +134,8 @@ def generate_prompt(text: str, feature_type: str) -> dict:
         1. Her prompt en az 20, en fazla 75 kelime olmalıdır.
         2. Her prompt farklı bir yaklaşım ve stil sunmalıdır.
         3. Promptlar doğrudan {prompt_type} oluşturmak için kullanılabilir olmalıdır.
-        4. Her prompt için belirgin bir stil belirle (örn: cinematic, photorealistic, anime, 3D render, oil painting, vb.)
+        4. Her prompt için farklı ve marka kimliğine uygun bir stil belirle.
+        5. Promptlar mutlaka ingilizce olmalıdır.
         
         Yanıtın şu formatta olmalıdır:
         
@@ -157,7 +160,7 @@ def generate_prompt(text: str, feature_type: str) -> dict:
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": f"Metin: {text}\nTür: {feature_type}"}
             ],
-            temperature=0.7,
+            temperature=0.5,
             max_tokens=1000
         )
         
@@ -227,8 +230,74 @@ def index():
 @app.route('/image')
 def image():
     """Görsel üretici sayfasını göster"""
-    logger.info("Görsel üretici sayfası görüntüleniyor")
-    return render_template('image.html')
+    image_urls = request.args.getlist('image_url')  # Birden fazla görsel URL'si alabilmek için getlist kullan
+    prompt = request.args.get('prompt')
+    brand = request.args.get('brand')
+    prompt_id = request.args.get('prompt_id')
+    
+    # Eğer prompt_id varsa ve görsel URL'leri yoksa, check_image_status fonksiyonunu çağır
+    if prompt_id and not image_urls:
+        try:
+            # API bilgilerini al
+            api_key = os.getenv("ASTRIA_API_KEY")
+            
+            if not api_key:
+                logger.error("API yapılandırması eksik")
+                return render_template('image.html')
+            
+            # Flux model ID - Astria'nın genel Flux modelini kullanıyoruz
+            flux_model_id = "1504944"  # Flux1.dev from the gallery
+            
+            # API URL'sini oluştur - prompt_id ile durumu kontrol et
+            api_url = f"https://api.astria.ai/tunes/{flux_model_id}/prompts/{prompt_id}"
+            
+            headers = {
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            # API'ye istek gönder
+            logger.info(f"Astria API durum kontrolü: {api_url}")
+            response = requests.get(
+                api_url,
+                headers=headers
+            )
+            
+            # Yanıtı kontrol et
+            if response.status_code == 200:
+                # Yanıtı JSON olarak parse et
+                result = response.json()
+                
+                # Görsel URL'lerini farklı formatlarda kontrol et
+                if 'images' in result and isinstance(result['images'], list) and len(result['images']) > 0:
+                    for image in result['images']:
+                        if isinstance(image, dict) and 'url' in image:
+                            image_urls.append(image.get('url'))
+                        elif isinstance(image, str):
+                            image_urls.append(image)
+                
+                # Diğer olası formatları kontrol et
+                if not image_urls and 'image_url' in result:
+                    image_urls.append(result.get('image_url'))
+                if not image_urls and 'output' in result and isinstance(result['output'], dict) and 'image_url' in result['output']:
+                    image_urls.append(result['output']['image_url'])
+                
+                # Görsel URL'lerini loglama
+                if image_urls:
+                    logger.info(f"Toplam {len(image_urls)} görsel URL bulundu")
+                    logger.info(f"İlk görsel URL: {image_urls[0]}")
+        except Exception as e:
+            logger.error(f"Görsel durumu kontrol edilirken hata oluştu: {str(e)}")
+    
+    # Tek bir URL string olarak geldiyse, onu listeye çevir
+    if not image_urls and request.args.get('image_url'):
+        image_urls = [request.args.get('image_url')]
+    
+    if not image_urls:
+        logger.info("Görsel üretici sayfası görüntüleniyor")
+        return render_template('image.html')
+    
+    logger.info(f"Görsel sonuç sayfası görüntüleniyor. Görsel URL sayısı: {len(image_urls)}")
+    return render_template('image.html', image_urls=image_urls, prompt=prompt, brand=brand, prompt_id=prompt_id)
 
 @app.route("/generate-prompt", methods=["POST"])
 def generate_prompt_api():
@@ -430,6 +499,353 @@ def check_status(request_id):
         })
     except Exception as e:
         logger.error(f"İstek durumu kontrol edilirken hata oluştu: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/generate_image', methods=['POST'])
+def generate_image():
+    prompt = request.form.get('prompt')
+    brand_input = request.form.get('brand_input')
+    aspect_ratio = request.form.get('aspect_ratio', '1:1')  # Varsayılan olarak 1:1
+    redirect_to_page = request.form.get('redirect', 'false').lower() == 'true'  # Yönlendirme seçeneği
+    
+    if not prompt:
+        return jsonify({"error": "Geçersiz prompt seçimi"}), 400
+    
+    try:
+        logger.info(f"Astria AI API'sine görsel oluşturma isteği gönderiliyor")
+        logger.info(f"Kullanılan prompt: {prompt[:50]}...")  # İlk 50 karakteri logla
+        logger.info(f"Kullanılan aspect ratio: {aspect_ratio}")
+        
+        # API URL'sini kontrol et - Flux API'sini kullanacağız
+        api_key = os.getenv("ASTRIA_API_KEY")
+        
+        # Flux model ID - Astria'nın genel Flux modelini kullanıyoruz
+        flux_model_id = "1504944"  # Flux1.dev from the gallery
+        
+        # API URL'sini oluştur
+        api_url = f"https://api.astria.ai/tunes/{flux_model_id}/prompts"
+        
+        if not api_key:
+            logger.error(f"Astria API bilgileri eksik. Key: {api_key[:5] if api_key else None}...")
+            return jsonify({"error": "API yapılandırması eksik"}), 500
+            
+        logger.info(f"Astria API URL: {api_url}")
+        
+        # Benzersiz bir istek ID'si oluştur
+        request_id = str(uuid.uuid4())
+        logger.info(f"Oluşturulan istek ID: {request_id}")
+        
+        # Varsayılan boyut olarak 896x1152 kullan
+        width, height = 896, 1152  # Varsayılan değerler
+        
+        # Aspect ratio'ya göre boyutları ayarla, ancak toplam piksel sayısını yaklaşık olarak koru
+        if aspect_ratio == "1:1":
+            width, height = 1024, 1024
+        elif aspect_ratio == "4:5":
+            width, height = 896, 1120
+        elif aspect_ratio == "16:9":
+            width, height = 1216, 684
+        elif aspect_ratio == "9:16":
+            width, height = 896, 1152  # Varsayılan boyut
+        
+        logger.info(f"Kullanılan görsel boyutu: {width}x{height}")
+        
+        # Astria AI API isteği için form data hazırla
+        data = {
+            'prompt[text]': prompt,
+            'prompt[width]': str(width),
+            'prompt[height]': str(height),
+            'prompt[num_inference_steps]': "50",
+            'prompt[guidance_scale]': "7.5",
+            'prompt[seed]': "-1",  # Rastgele seed
+            'prompt[lora_scale]': "0.8"  # LoRA ağırlığı
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}"
+        }
+        
+        # Payload'ı logla (hassas bilgileri gizleyerek)
+        logger.info(f"Astria API data: {json.dumps(data)}")
+        
+        # İstek zamanını ölç
+        request_start_time = time.time()
+        logger.info("Astria AI isteği başlıyor...")
+        
+        # Astria AI API'sine istek gönder
+        response = requests.post(
+            api_url,
+            headers=headers,
+            data=data
+        )
+        
+        # İstek süresini hesapla
+        request_duration = time.time() - request_start_time
+        logger.info(f"Astria AI isteği tamamlandı. Süre: {request_duration:.2f} saniye")
+        logger.info(f"Astria API yanıt kodu: {response.status_code}")
+        
+        # Yanıtı kontrol et
+        if response.status_code == 200 or response.status_code == 201:
+            try:
+                result = response.json()
+                logger.info(f"Astria AI yanıtı başarılı: {json.dumps(result)[:100]}...")
+            except json.JSONDecodeError:
+                # Yanıt JSON değilse, metin olarak al
+                result = response.text
+                logger.warning(f"Astria API yanıtı JSON formatında değil: {result[:100]}...")
+                return jsonify({
+                    "error": "API yanıtı geçersiz format",
+                    "details": result[:200] + "..." if len(result) > 200 else result
+                }), 500
+            
+            # Görsel URL'sini al - Astria API'sinin yanıt formatına göre
+            image_url = None
+            image_urls = []
+            
+            # Yanıt formatını kontrol et
+            if isinstance(result, dict):
+                # Prompt ID'yi kontrol et
+                prompt_id = result.get('id')
+                
+                # Görsel URL'lerini farklı formatlarda kontrol et
+                if 'images' in result and isinstance(result['images'], list) and len(result['images']) > 0:
+                    for image in result['images']:
+                        if isinstance(image, dict) and 'url' in image:
+                            image_urls.append(image.get('url'))
+                        elif isinstance(image, str):
+                            image_urls.append(image)
+                
+                # Diğer olası formatları kontrol et
+                if not image_urls and 'image_url' in result:
+                    image_urls.append(result.get('image_url'))
+                if not image_urls and 'output' in result and isinstance(result['output'], dict) and 'image_url' in result['output']:
+                    image_urls.append(result['output']['image_url'])
+                
+                # İlk görsel URL'sini ana URL olarak ayarla (geriye dönük uyumluluk için)
+                if image_urls:
+                    image_url = image_urls[0]
+                
+                # Görsel URL'lerini loglama
+                if image_urls:
+                    logger.info(f"Toplam {len(image_urls)} görsel URL bulundu")
+                    logger.info(f"İlk görsel URL: {image_urls[0]}")
+                else:
+                    logger.warning(f"Görsel URL bulunamadı. Yanıt: {json.dumps(result)[:200]}...")
+                
+                if not image_urls:
+                    logger.error("Astria AI yanıtında görsel URL'si bulunamadı")
+                    logger.error(f"Tam yanıt: {json.dumps(result)}")
+                    
+                    # Prompt ID varsa, asenkron işleme için döndür
+                    if prompt_id:
+                        logger.info(f"Prompt ID bulundu: {prompt_id}. Görsel hazır olduğunda kontrol edilebilir.")
+                        return jsonify({
+                            "success": True,
+                            "prompt_id": prompt_id,
+                            "prompt": prompt,
+                            "aspect_ratio": aspect_ratio,
+                            "request_id": request_id,
+                            "message": "Görsel asenkron olarak oluşturuluyor. Lütfen birkaç dakika sonra tekrar kontrol edin."
+                        })
+                    
+                    return jsonify({"error": "Görsel oluşturulamadı", "details": result}), 500
+                
+                # Eğer yönlendirme isteniyorsa, image.html sayfasına yönlendir
+                if redirect_to_page:
+                    return redirect(url_for('image', image_url=image_urls, prompt=prompt, brand=brand_input))
+                
+                # Aksi takdirde JSON yanıtı döndür
+                return jsonify({
+                    "success": True,
+                    "image_url": image_url,  # Geriye dönük uyumluluk için
+                    "image_urls": image_urls,  # Tüm görsel URL'leri
+                    "prompt": prompt,
+                    "aspect_ratio": aspect_ratio,
+                    "request_id": request_id,
+                    "prompt_id": prompt_id  # Prompt ID'yi de döndür
+                })
+            else:
+                logger.error(f"Beklenmeyen yanıt formatı: {type(result)}")
+                return jsonify({"error": "Beklenmeyen yanıt formatı", "details": str(result)[:200]}), 500
+        else:
+            logger.error(f"Astria AI API hatası: {response.status_code} - {response.text}")
+            return jsonify({
+                "error": f"Görsel oluşturulurken bir hata oluştu: {response.status_code}",
+                "details": response.text
+            }), response.status_code
+            
+    except Exception as e:
+        logger.error(f"Görsel oluşturma hatası: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": f"Görsel oluşturulurken bir hata oluştu: {str(e)}"}), 500
+
+@app.route('/test_astria_api', methods=['GET'])
+def test_astria_api():
+    """Astria API bağlantısını test etmek için kullanılan endpoint"""
+    try:
+        # API bilgilerini al
+        api_key = os.getenv("ASTRIA_API_KEY")
+        
+        # Flux model ID - Astria'nın genel Flux modelini kullanıyoruz
+        flux_model_id = "1504944"  # Flux1.dev from the gallery
+        
+        # API URL'sini oluştur
+        api_url = f"https://api.astria.ai/tunes/{flux_model_id}/prompts"
+        
+        # API bilgilerini kontrol et
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "error": "API bilgileri eksik",
+                "api_key_exists": bool(api_key)
+            })
+        
+        # Test için form data oluştur
+        data = {
+            'prompt[text]': "Test image of a blue sky with clouds",
+            'prompt[width]': "896",
+            'prompt[height]': "1152",
+            'prompt[num_inference_steps]': "30",
+            'prompt[guidance_scale]': "7.5",
+            'prompt[seed]': "-1",  # Rastgele seed
+            'prompt[lora_scale]': "0.8"  # LoRA ağırlığı
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}"
+        }
+        
+        # API'ye istek gönder
+        logger.info(f"Astria API test isteği gönderiliyor: {api_url}")
+        response = requests.post(
+            api_url,
+            headers=headers,
+            data=data
+        )
+        
+        # Yanıtı kontrol et
+        if response.status_code == 200 or response.status_code == 201:
+            result = response.json()
+            return jsonify({
+                "success": True,
+                "status_code": response.status_code,
+                "response_preview": str(result)[:200] + "..." if len(str(result)) > 200 else str(result)
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            })
+            
+    except Exception as e:
+        logger.error(f"Astria API test hatası: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        })
+
+@app.route('/check_image_status/<prompt_id>', methods=['GET'])
+def check_image_status(prompt_id):
+    """Asenkron görsel oluşturma işleminin durumunu kontrol etmek için kullanılan endpoint"""
+    try:
+        # Yönlendirme seçeneğini kontrol et
+        redirect_to_page = request.args.get('redirect', 'false').lower() == 'true'
+        prompt = request.args.get('prompt', '')
+        brand = request.args.get('brand', '')
+        
+        # API bilgilerini al
+        api_key = os.getenv("ASTRIA_API_KEY")
+        
+        if not api_key:
+            return jsonify({"error": "API yapılandırması eksik"}), 500
+        
+        # Flux model ID - Astria'nın genel Flux modelini kullanıyoruz
+        flux_model_id = "1504944"  # Flux1.dev from the gallery
+        
+        # API URL'sini oluştur - prompt_id ile durumu kontrol et
+        api_url = f"https://api.astria.ai/tunes/{flux_model_id}/prompts/{prompt_id}"
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}"
+        }
+        
+        # API'ye istek gönder
+        logger.info(f"Astria API durum kontrolü: {api_url}")
+        response = requests.get(
+            api_url,
+            headers=headers
+        )
+        
+        # Yanıtı kontrol et
+        if response.status_code == 200:
+            # Yanıtı JSON olarak parse et
+            try:
+                result = response.json()
+                logger.info(f"Astria API durum yanıtı: {json.dumps(result)[:100]}...")
+                
+                # Görsel URL'sini al
+                image_url = None
+                image_urls = []
+                status = "processing"
+                is_ready = False
+                
+                # Görsel URL'lerini farklı formatlarda kontrol et
+                if 'images' in result and isinstance(result['images'], list) and len(result['images']) > 0:
+                    for image in result['images']:
+                        if isinstance(image, dict) and 'url' in image:
+                            image_urls.append(image.get('url'))
+                        elif isinstance(image, str):
+                            image_urls.append(image)
+                
+                # Diğer olası formatları kontrol et
+                if not image_urls and 'image_url' in result:
+                    image_urls.append(result.get('image_url'))
+                if not image_urls and 'output' in result and isinstance(result['output'], dict) and 'image_url' in result['output']:
+                    image_urls.append(result['output']['image_url'])
+                
+                # İlk görsel URL'sini ana URL olarak ayarla (geriye dönük uyumluluk için)
+                if image_urls:
+                    image_url = image_urls[0]
+                
+                # Durum bilgisini kontrol et
+                if 'status' in result:
+                    status = result['status']
+                    # Durum "completed" ise görsel hazır demektir
+                    if status.lower() in ["completed", "success", "done"]:
+                        is_ready = True
+                
+                # Görsel URL'si varsa hazır kabul et
+                if image_urls:
+                    is_ready = True
+                
+                # Görsel URL'lerini loglama
+                if image_urls:
+                    logger.info(f"Toplam {len(image_urls)} görsel URL bulundu")
+                    logger.info(f"İlk görsel URL: {image_urls[0]}")
+                else:
+                    logger.warning(f"Görsel URL bulunamadı. Yanıt: {json.dumps(result)[:200]}...")
+                
+                # Her durumda JSON yanıtı döndür
+                return jsonify({
+                    "is_ready": is_ready,
+                    "status": status,
+                    "image_url": image_url,  # Geriye dönük uyumluluk için
+                    "image_urls": image_urls,  # Tüm görsel URL'leri
+                    "prompt_id": prompt_id,
+                    "prompt": prompt,
+                    "brand": brand
+                })
+            except json.JSONDecodeError:
+                logger.error(f"Astria API yanıtı JSON formatında değil: {response.text[:100]}...")
+                return jsonify({"error": "API yanıtı geçersiz format"}), 500
+        else:
+            logger.error(f"Astria API durum kontrolü hatası: {response.status_code} - {response.text}")
+            return jsonify({"error": f"Durum kontrolü sırasında bir hata oluştu: {response.status_code}"}), response.status_code
+    except Exception as e:
+        logger.error(f"Durum kontrolü hatası: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

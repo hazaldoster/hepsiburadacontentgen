@@ -32,6 +32,61 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
+        /* Aspect ratio seçimi için stil */
+        .aspect-ratio-option {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .aspect-ratio-option.selected {
+            transform: translateY(-3px);
+        }
+        .aspect-ratio-option.selected::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 0.5rem;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+        /* Görsel galerisi için stil */
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .image-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+        .image-item:hover {
+            transform: translateY(-5px);
+        }
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+        .image-item:hover img {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen">
@@ -47,52 +102,56 @@
 
         <header class="mb-12 text-center">
             <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Görsel Üretici</h1>
-            <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli görseller oluşturun. Marka bilgilerinizi girin, size özel promptlar oluşturalım ve etkileyici görseller üretelim.</p>
+            <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli görseller oluşturun. İşte sizin için oluşturduğumuz görseller!</p>
         </header>
 
-        <div class="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+        <div class="max-w-6xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
             <div class="p-6">
-                <form id="imageForm" class="mb-6">
-                    <div class="mb-4">
-                        <label for="brandInput" class="block text-gray-300 mb-2 font-medium">Marka/Ürün Bilgileri</label>
-                        <textarea id="brandInput" name="brand_input" rows="4" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="Markanız veya ürününüz hakkında detaylı bilgi verin..."></textarea>
-                    </div>
-                    <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                        Görsel Promptları Oluştur
-                    </button>
-                </form>
-
-                <div id="loadingPrompts" class="hidden text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-                    <p class="text-gray-300">Promptlar oluşturuluyor...</p>
-                </div>
-
-                <div id="promptResults" class="hidden">
-                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Promptlar</h2>
-                    <p class="text-gray-400 mb-4">Beğendiğiniz promptu seçin ve görsel oluşturun.</p>
+                <div id="imageResult" class="mt-8">
+                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Görseller</h2>
                     
-                    <div class="prompt-container grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Promptlar JavaScript ile buraya eklenecek -->
-                    </div>
-                </div>
-
-                <div id="imageLoading" class="hidden text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
-                    <p class="text-gray-300">Görsel oluşturuluyor... Bu işlem birkaç dakika sürebilir.</p>
-                </div>
-
-                <div id="imageResult" class="hidden mt-8">
-                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Görsel</h2>
+                    <!-- Görsel Galerisi -->
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <img id="generatedImage" src="" alt="Oluşturulan Görsel" class="w-full rounded-lg shadow-lg">
+                        {% if image_urls and image_urls|length > 0 %}
+                        <div class="image-gallery">
+                            {% for image_url in image_urls %}
+                            <div class="image-item">
+                                <a href="{{ image_url }}" target="_blank" class="block">
+                                    <img src="{{ image_url }}" alt="Oluşturulan Görsel {{ loop.index }}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
+                                </a>
+                                <div class="mt-2 flex justify-center">
+                                    <a href="{{ image_url }}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                        Görseli Aç ve Kaydet
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Tüm görselleri indirme butonu kaldırıldı -->
+                        {% else %}
+                        <div class="text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-purple-500 mb-4"></div>
+                            <p class="text-gray-300">Görseller yükleniyor veya henüz oluşturulmadı...</p>
+                            <p class="text-gray-400 mt-2">Lütfen bekleyin veya yeni bir görsel oluşturun.</p>
+                        </div>
+                        {% endif %}
                     </div>
+                    
                     <div class="mt-4">
                         <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
-                        <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                        <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ prompt }}</p>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
+                        <p id="brandInfo" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ brand }}</p>
                     </div>
                     <div class="mt-6 text-center">
-                        <a id="downloadBtn" href="#" download class="inline-block py-3 px-6 bg-gradient-to-r from-green-500 to-teal-500 text-white font-medium rounded-lg shadow-lg hover:from-green-600 hover:to-teal-600 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
-                            Görseli İndir
+                        <a href="{{ url_for('image') }}" class="inline-block py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                            Yeni Görsel Oluştur
                         </a>
                     </div>
                 </div>
@@ -106,80 +165,542 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const imageForm = document.getElementById('imageForm');
-            const loadingPrompts = document.getElementById('loadingPrompts');
-            const promptResults = document.getElementById('promptResults');
-            const promptContainer = document.querySelector('.prompt-container');
-            const imageLoading = document.getElementById('imageLoading');
-            const imageResult = document.getElementById('imageResult');
-            const generatedImage = document.getElementById('generatedImage');
-            const usedPrompt = document.getElementById('usedPrompt');
-            const downloadBtn = document.getElementById('downloadBtn');
-            
-            // Form gönderildiğinde
-            imageForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const brandInput = document.getElementById('brandInput').value;
-                if (!brandInput) {
-                    alert('Lütfen marka/ürün bilgisi girin');
-                    return;
-                }
-                
-                // Promptları oluşturma işlemi burada olacak
-                imageForm.classList.add('hidden');
-                loadingPrompts.classList.remove('hidden');
-                
-                // Burada API'ye istek atılacak
-                // Şimdilik örnek promptlar gösterelim
-                setTimeout(() => {
-                    loadingPrompts.classList.add('hidden');
-                    promptResults.classList.remove('hidden');
-                    
-                    // Örnek promptlar
-                    const samplePrompts = [
-                        "Minimalist tasarım, " + brandInput + " ürünü, beyaz arka plan, profesyonel ürün fotoğrafı",
-                        "Canlı renkler, " + brandInput + " ürünü doğal ortamda, lifestyle fotoğraf",
-                        "Siyah-beyaz, dramatik aydınlatma, " + brandInput + " ürünü, sanatsal kompozisyon",
-                        "Pastel tonlar, " + brandInput + " ürünü, Instagram estetik, flat lay kompozisyon"
-                    ];
-                    
-                    // Promptları ekrana ekle
-                    promptContainer.innerHTML = '';
-                    samplePrompts.forEach((prompt, index) => {
-                        const promptCard = document.createElement('div');
-                        promptCard.className = 'bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors';
-                        promptCard.innerHTML = `
-                            <h3 class="font-medium text-purple-300 mb-2">Prompt ${index + 1}</h3>
-                            <p class="text-gray-300">${prompt}</p>
-                        `;
-                        
-                        // Prompt seçildiğinde görsel oluştur
-                        promptCard.addEventListener('click', function() {
-                            generateImage(prompt, brandInput);
-                        });
-                        
-                        promptContainer.appendChild(promptCard);
-                    });
-                }, 2000);
+            // Görsellerin yüklenmesini kontrol et
+            const images = document.querySelectorAll('.image-gallery img');
+            images.forEach(img => {
+                img.addEventListener('error', function() {
+                    this.parentNode.innerHTML = `
+                        <div class="flex items-center justify-center h-48 bg-gray-800 rounded-lg">
+                            <p class="text-red-400 text-sm">Görsel yüklenemedi</p>
+                        </div>
+                    `;
+                });
             });
             
-            // Görsel oluşturma fonksiyonu
-            function generateImage(prompt, brandInput) {
-                promptResults.classList.add('hidden');
-                imageLoading.classList.remove('hidden');
+            // İndirme fonksiyonları kaldırıldı
+            
+            // URL parametrelerini kontrol et
+            const urlParams = new URLSearchParams(window.location.search);
+            const promptId = urlParams.get('prompt_id');
+            const imageUrl = urlParams.get('image_url');
+            const imageUrls = urlParams.getAll('image_url');
+            
+            // Görselleri görüntülemek için fonksiyon
+            function displayImages(imageUrls, prompt, brand) {
+                // Görsel galerisi elementini seç
+                const imageGallery = document.querySelector('.image-gallery');
+                if (!imageGallery) {
+                    // Eğer görsel galerisi yoksa, oluştur
+                    const imageResult = document.getElementById('imageResult');
+                    if (imageResult) {
+                        // Yükleniyor mesajını gizle
+                        const loadingElement = imageResult.querySelector('.text-center.py-8');
+                        if (loadingElement) {
+                            loadingElement.classList.add('hidden');
+                        }
+                        
+                        // Görsel galerisini oluştur
+                        const galleryContainer = imageResult.querySelector('.bg-gray-900.p-4.rounded-lg');
+                        if (galleryContainer) {
+                            galleryContainer.innerHTML = '<div class="image-gallery"></div>';
+                            
+                            // Prompt ve brand bilgilerini güncelle
+                            const promptElement = document.getElementById('usedPrompt');
+                            const brandElement = document.getElementById('brandInfo');
+                            
+                            if (promptElement && prompt) {
+                                promptElement.textContent = prompt;
+                            }
+                            
+                            if (brandElement && brand) {
+                                brandElement.textContent = brand;
+                            }
+                        }
+                    }
+                }
                 
-                // Burada API'ye istek atılacak
-                // Şimdilik örnek bir görsel gösterelim
+                // Görsel galerisini tekrar seç (oluşturulmuş olabilir)
+                const gallery = document.querySelector('.image-gallery');
+                if (gallery) {
+                    // Görselleri ekle
+                    gallery.innerHTML = '';
+                    imageUrls.forEach((url, index) => {
+                        const imageItem = document.createElement('div');
+                        imageItem.className = 'image-item';
+                        imageItem.innerHTML = `
+                            <a href="${url}" target="_blank" class="block">
+                                <img src="${url}" alt="Oluşturulan Görsel ${index + 1}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
+                            </a>
+                            <div class="mt-2 flex justify-center">
+                                <a href="${url}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    Görseli Aç ve Kaydet
+                                </a>
+                            </div>
+                        `;
+                        gallery.appendChild(imageItem);
+                    });
+                    
+                    // Görsellerin yüklenmesini kontrol et
+                    const images = gallery.querySelectorAll('img');
+                    images.forEach(img => {
+                        img.addEventListener('error', function() {
+                            this.parentNode.innerHTML = `
+                                <div class="flex items-center justify-center h-48 bg-gray-800 rounded-lg">
+                                    <p class="text-red-400 text-sm">Görsel yüklenemedi</p>
+                                </div>
+                            `;
+                        });
+                    });
+                }
+            }
+            
+            // Görsel durumunu kontrol eden ve gösteren fonksiyon
+            function checkImageStatusAndDisplay(promptId, prompt, brand) {
+                // Yükleniyor göstergesini göster
+                const imageLoading = document.getElementById('imageLoading');
+                if (imageLoading) {
+                    imageLoading.classList.remove('hidden');
+                }
+                
+                // Durum kontrolü için fonksiyon
+                function checkStatus() {
+                    fetch(`/check_image_status/${promptId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.is_ready && data.image_urls && data.image_urls.length > 0) {
+                                // Görseller hazırsa, sayfayı yenilemeden görselleri göster
+                                displayImages(data.image_urls, data.prompt || prompt, data.brand || brand);
+                                
+                                // Kontrol döngüsünü durdur
+                                clearInterval(statusInterval);
+                                
+                                // Yükleniyor göstergesini gizle
+                                if (imageLoading) {
+                                    imageLoading.classList.add('hidden');
+                                }
+                                
+                                // Prompt sonuçlarını göster
+                                const promptResults = document.getElementById('promptResults');
+                                if (promptResults) {
+                                    promptResults.classList.remove('hidden');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Durum kontrolü hatası:', error);
+                            // Hata durumunda da yükleniyor göstergesini gizle
+                            if (imageLoading) {
+                                imageLoading.classList.add('hidden');
+                            }
+                        });
+                }
+                
+                // İlk kontrolü hemen yap
+                checkStatus();
+                
+                // 5 saniyede bir kontrol et
+                const statusInterval = setInterval(checkStatus, 5000);
+                
+                // 60 saniye sonra kontrolü durdur
                 setTimeout(() => {
-                    imageLoading.classList.add('hidden');
+                    clearInterval(statusInterval);
+                    // 60 saniye sonra hala yükleniyor göstergesi açıksa, gizle
+                    if (imageLoading) {
+                        imageLoading.classList.add('hidden');
+                    }
+                }, 60000);
+            }
+            
+            // Eğer prompt_id varsa ve görseller yoksa, durumu periyodik olarak kontrol et
+            if (promptId && (!imageUrls || imageUrls.length === 0)) {
+                checkImageStatusAndDisplay(promptId, urlParams.get('prompt') || '', urlParams.get('brand') || '');
+            }
+            
+            // Eğer image_url parametresi yoksa, form sayfasını göster
+            if (!imageUrl && !promptId) {
+                // Form sayfası HTML'ini oluştur
+                document.querySelector('.container').innerHTML = `
+                    <div class="flex items-center mb-6">
+                        <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Ana Sayfa
+                        </a>
+                    </div>
+
+                    <header class="mb-12 text-center">
+                        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Görsel Üretici</h1>
+                        <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli görseller oluşturun. Marka bilgilerinizi girin, size özel promptlar oluşturalım ve etkileyici görseller üretelim.</p>
+                    </header>
+
+                    <div class="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-6">
+                            <form id="imageForm" class="mb-6">
+                                <div class="mb-4">
+                                    <label for="brandInput" class="block text-gray-300 mb-2 font-medium">Marka/Ürün Bilgileri</label>
+                                    <textarea id="brandInput" name="brand_input" rows="4" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="Markanız veya ürününüz hakkında detaylı bilgi verin..."></textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-gray-300 mb-2 font-medium">Görsel Boyutu</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors selected">
+                                            <input type="radio" name="aspectRatio" value="9:16" class="sr-only aspect-ratio-input" checked>
+                                            <div class="w-12 h-16 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-8 h-14 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">9:16</span>
+                                            <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Stories)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="4:5" class="sr-only aspect-ratio-input">
+                                            <div class="w-12 h-15 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-10 h-12 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">4:5</span>
+                                            <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Post)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="1:1" class="sr-only aspect-ratio-input">
+                                            <div class="w-14 h-14 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-12 h-12 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">1:1</span>
+                                            <span class="text-gray-400 text-xs mt-1">Kare (Instagram, Facebook)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="16:9" class="sr-only aspect-ratio-input">
+                                            <div class="w-16 h-9 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-14 h-7 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">16:9</span>
+                                            <span class="text-gray-400 text-xs mt-1">Yatay (Web, LinkedIn)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                                    Görsel Promptları Oluştur
+                                </button>
+                            </form>
+
+                            <div id="loadingPrompts" class="hidden text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                                <p class="text-gray-300">Promptlar oluşturuluyor...</p>
+                            </div>
+
+                            <div id="promptResults" class="hidden">
+                                <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Promptlar</h2>
+                                <p class="text-gray-400 mb-4">Beğendiğiniz promptu seçin ve görsel oluşturun.</p>
+                                
+                                <div class="prompt-container grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Promptlar JavaScript ile buraya eklenecek -->
+                                </div>
+                            </div>
+
+                            <div id="imageLoading" class="hidden text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
+                                <p class="text-gray-300">Görsel oluşturuluyor... Bu işlem birkaç dakika sürebilir.</p>
+                            </div>
+                            
+                            <div id="imageResult" class="hidden mt-8">
+                                <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Görseller</h2>
+                                
+                                <!-- Görsel Galerisi -->
+                                <div class="bg-gray-900 p-4 rounded-lg">
+                                    <div class="text-center py-8">
+                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                                        <p class="text-gray-300">Görseller yükleniyor veya henüz oluşturulmadı...</p>
+                                        <p class="text-gray-400 mt-2">Lütfen bekleyin veya yeni bir görsel oluşturun.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
+                                    <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
+                                    <p id="brandInfo" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <footer class="mt-12 text-center text-gray-500 text-sm">
+                        <p>© 2025 Hızlı Görsel Üretici | AI Destekli Görsel Üretim Aracı</p>
+                    </footer>
+                `;
+
+                // Form ve diğer elementleri seç
+                const imageForm = document.getElementById('imageForm');
+                const loadingPrompts = document.getElementById('loadingPrompts');
+                const promptResults = document.getElementById('promptResults');
+                const promptContainer = document.querySelector('.prompt-container');
+                const imageLoading = document.getElementById('imageLoading');
+                const imageResult = document.getElementById('imageResult');
+                
+                // Aspect ratio seçimi için
+                const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+                const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+                
+                // Sayfa yüklendiğinde varsayılan seçimi işaretle
+                updateSelectedAspectRatio();
+                
+                // Her bir radio input için event listener ekle
+                aspectRatioInputs.forEach(input => {
+                    input.addEventListener('change', updateSelectedAspectRatio);
+                });
+                
+                // Seçilen aspect ratio'yu güncelle
+                function updateSelectedAspectRatio() {
+                    aspectRatioOptions.forEach(option => {
+                        const input = option.querySelector('input');
+                        if (input.checked) {
+                            option.classList.add('selected');
+                        } else {
+                            option.classList.remove('selected');
+                        }
+                    });
+                }
+                
+                // Form gönderildiğinde
+                imageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const brandInput = document.getElementById('brandInput').value;
+                    if (!brandInput) {
+                        alert('Lütfen marka/ürün bilgisi girin');
+                        return;
+                    }
+                    
+                    // Seçilen aspect ratio değerini al
+                    const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                    
+                    // Eski promptları gizle
+                    promptResults.classList.add('hidden');
+                    promptContainer.innerHTML = ''; // Eski promptları temizle
+                    
+                    // Promptları oluşturma işlemi
+                    loadingPrompts.classList.remove('hidden');
+                    
+                    // API'ye istek at
+                    fetch('/generate-prompt', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: brandInput,
+                            feature_type: 'image',
+                            aspect_ratio: aspectRatio
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Prompt oluşturma hatası');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loadingPrompts.classList.add('hidden');
+                        promptResults.classList.remove('hidden');
+                        
+                        // API'den gelen promptları ekrana ekle
+                        promptContainer.innerHTML = '';
+                        data.prompt_data.forEach((item, index) => {
+                            const promptCard = document.createElement('div');
+                            promptCard.className = 'bg-gray-700 p-4 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors';
+                            
+                            // Prompt ID'si oluştur
+                            const promptId = `prompt-${index}`;
+                            const textareaId = `textarea-${index}`;
+                            
+                            // Prompt kartı içeriği
+                            promptCard.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-medium text-purple-300">${item.style}</h3>
+                                    <div class="flex space-x-2">
+                                        <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            Düzenle
+                                        </button>
+                                        <button class="generate-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            Görüntüle
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="prompt-content" id="${promptId}">
+                                    <p class="text-gray-300">${item.prompt}</p>
+                                </div>
+                                <div class="prompt-edit hidden" id="${textareaId}">
+                                    <textarea class="w-full bg-gray-800 text-gray-300 p-2 rounded mb-2" rows="5">${item.prompt}</textarea>
+                                    <div class="flex justify-end space-x-2">
+                                        <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            İptal
+                                        </button>
+                                        <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            promptContainer.appendChild(promptCard);
+                            
+                            // Prompt kartına tıklama olayı ekle
+                            const promptContent = promptCard.querySelector(`#${promptId}`);
+                            promptContent.addEventListener('click', function() {
+                                generateImage(item.prompt, brandInput);
+                            });
+                            
+                            // Düzenle butonuna tıklama olayı ekle
+                            const editBtn = promptCard.querySelector('.edit-btn');
+                            editBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Düzenleme modunu aç
+                                const promptContent = document.getElementById(promptId);
+                                const promptEdit = document.getElementById(textareaId);
+                                
+                                promptContent.classList.add('hidden');
+                                promptEdit.classList.remove('hidden');
+                            });
+                            
+                            // Görüntüle butonuna tıklama olayı ekle
+                            const generateBtn = promptCard.querySelector('.generate-btn');
+                            generateBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Görsel oluştur
+                                generateImage(item.prompt, brandInput);
+                            });
+                            
+                            // İptal butonuna tıklama olayı ekle
+                            const cancelBtn = promptCard.querySelector('.cancel-btn');
+                            cancelBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Düzenleme modunu kapat
+                                const promptContent = document.getElementById(promptId);
+                                const promptEdit = document.getElementById(textareaId);
+                                
+                                promptContent.classList.remove('hidden');
+                                promptEdit.classList.add('hidden');
+                                
+                                // Textarea içeriğini orijinal prompt ile değiştir
+                                const textarea = promptEdit.querySelector('textarea');
+                                textarea.value = item.prompt;
+                            });
+                            
+                            // Kaydet butonuna tıklama olayı ekle
+                            const saveBtn = promptCard.querySelector('.save-btn');
+                            saveBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Yeni prompt değerini al
+                                const textarea = document.querySelector(`#${textareaId} textarea`);
+                                const newPrompt = textarea.value.trim();
+                                
+                                if (newPrompt) {
+                                    // Prompt değerini güncelle
+                                    item.prompt = newPrompt;
+                                    
+                                    // Görünümü güncelle
+                                    const promptContent = document.getElementById(promptId);
+                                    promptContent.querySelector('p').textContent = newPrompt;
+                                    
+                                    // Düzenleme modunu kapat
+                                    promptContent.classList.remove('hidden');
+                                    document.getElementById(textareaId).classList.add('hidden');
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loadingPrompts.classList.add('hidden');
+                        alert('Promptlar oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                    });
+                });
+                
+                // Görsel oluşturma fonksiyonu
+                function generateImage(prompt, brandInput) {
+                    // Prompt sonuçlarını gizle
+                    promptResults.classList.add('hidden');
+                    
+                    // Görsel sonuç alanını göster
                     imageResult.classList.remove('hidden');
                     
-                    // Örnek görsel
-                    generatedImage.src = "https://source.unsplash.com/random/800x800/?product," + encodeURIComponent(brandInput);
-                    usedPrompt.textContent = prompt;
-                    downloadBtn.href = "https://source.unsplash.com/random/800x800/?product," + encodeURIComponent(brandInput);
-                }, 3000);
+                    // Yükleniyor göstergesini göster
+                    imageLoading.classList.remove('hidden');
+                    
+                    // Seçilen aspect ratio değerini al
+                    const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                    
+                    // Prompt ve brand bilgilerini güncelle
+                    const promptElement = document.getElementById('usedPrompt');
+                    const brandElement = document.getElementById('brandInfo');
+                    
+                    if (promptElement) {
+                        promptElement.textContent = prompt;
+                    }
+                    
+                    if (brandElement) {
+                        brandElement.textContent = brandInput;
+                    }
+                    
+                    // API'ye istek gönder
+                    const formData = new FormData();
+                    formData.append('prompt', prompt);
+                    formData.append('brand_input', brandInput);
+                    formData.append('aspect_ratio', aspectRatio);
+                    formData.append('redirect', 'false');
+                    
+                    fetch('/generate_image', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Görsel oluşturma hatası: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Prompt ID varsa, asenkron işleme için kontrol et
+                        if (data.prompt_id) {
+                            alert('Görsel oluşturuluyor. Lütfen bekleyin, görseller hazır olduğunda otomatik olarak bu sayfada görüntülenecektir.');
+                            
+                            // Görsel durumunu kontrol et
+                            checkImageStatusAndDisplay(data.prompt_id, prompt, brandInput);
+                        } else if (data.image_urls && data.image_urls.length > 0) {
+                            // Görseller hazırsa, sayfayı yenilemeden görselleri göster
+                            displayImages(data.image_urls, prompt, brandInput);
+                            
+                            // Yükleniyor göstergesini gizle
+                            imageLoading.classList.add('hidden');
+                        } else if (data.image_url) {
+                            // Tek görsel URL'si varsa
+                            displayImages([data.image_url], prompt, brandInput);
+                            
+                            // Yükleniyor göstergesini gizle
+                            imageLoading.classList.add('hidden');
+                        } else {
+                            // Hata durumu
+                            imageLoading.classList.add('hidden');
+                            alert('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        imageLoading.classList.add('hidden');
+                        alert('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                    });
+                }
             }
         });
     </script>
