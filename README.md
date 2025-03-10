@@ -7,7 +7,7 @@ AI-powered content creation tool for e-commerce platforms. Generate visual and v
 - Generate images and videos from text
 - Multiple style options with GPT-4o
 - High-quality images with Astria AI
-- Dynamic videos with Fal.ai
+- Dynamic videos with Veo2
 - Various aspect ratios for different platforms
 - Brand-compatible content options
 
