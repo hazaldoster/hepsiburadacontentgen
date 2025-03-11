@@ -132,6 +132,58 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
         }
+        
+        /* Prompt düzenleme alanı */
+        .prompt-editor {
+            margin-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+        }
+        
+        .prompt-editor textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Video boyutu seçimi için stil - index.html'den alındı */
+        .aspect-ratio-option {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .aspect-ratio-option.selected {
+            transform: translateY(-3px);
+        }
+        .aspect-ratio-option.selected::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 0.5rem;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+        
+        /* Regenerate button container */
+        .regenerate-btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
@@ -155,12 +207,12 @@
                 <div id="videoResult" class="mt-8">
                     <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Video</h2>
                     <div class="bg-gray-900 p-4 rounded-lg">
-                        <div id="videoLoading" class="loader-container">
+                        <div id="videoLoading" class="loader-container hidden">
                             <div class="video-loader"></div>
                             <p class="loading-text text-xl">Video yükleniyor...</p>
                             <p class="text-gray-400 mt-2">Lütfen bekleyin, video hazırlanıyor</p>
                         </div>
-                        <video id="generatedVideo" controls autoplay loop class="w-full rounded-lg shadow-lg hidden">
+                        <video id="generatedVideo" controls autoplay loop class="w-full rounded-lg shadow-lg">
                             <source src="{{ video_url }}" type="video/mp4">
                             Tarayıcınız video etiketini desteklemiyor.
                         </video>
@@ -172,6 +224,44 @@
                             <p class="text-gray-400 mt-2">Lütfen tekrar deneyin veya yeni bir video oluşturun</p>
                         </div>
                     </div>
+                    
+                    <!-- Prompt Düzenleme Alanı -->
+                    <div class="prompt-editor">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Prompt Düzenle ve Yeniden Oluştur:</h3>
+                        <form id="regenerateForm">
+                            <textarea id="editedPrompt" class="w-full bg-gray-700 text-gray-200 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{{ prompt }}</textarea>
+                            
+                            <div class="mt-6 mb-4">
+                                <label class="block text-gray-300 mb-2 font-medium text-center">Video Boyutu</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors selected">
+                                        <input type="radio" name="aspectRatio" value="9:16" class="sr-only aspect-ratio-input" checked>
+                                        <div class="w-12 h-16 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                            <div class="w-8 h-14 bg-gray-300 rounded-sm"></div>
+                                        </div>
+                                        <span class="text-gray-300 font-medium">Dikey (9:16)</span>
+                                        <span class="text-gray-400 text-xs mt-1">Instagram Reels, TikTok</span>
+                                    </label>
+                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                        <input type="radio" name="aspectRatio" value="16:9" class="sr-only aspect-ratio-input">
+                                        <div class="w-16 h-9 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                            <div class="w-14 h-7 bg-gray-300 rounded-sm"></div>
+                                        </div>
+                                        <span class="text-gray-300 font-medium">Yatay (16:9)</span>
+                                        <span class="text-gray-400 text-xs mt-1">YouTube, Instagram</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="regenerate-btn-container">
+                                <button type="submit" id="regenerateBtn" class="py-3 px-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                                    Tekrar Üret
+                                </button>
+                            </div>
+                        </form>
+                        <div id="regenerateError" class="mt-4 bg-red-900/50 text-red-200 p-3 rounded-lg hidden"></div>
+                    </div>
+                    
                     <div class="mt-4">
                         <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
                         <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ prompt }}</p>
@@ -193,7 +283,7 @@
         </div>
         
         <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2024 Hızlı Video Üretici | AI Destekli Video Üretim Aracı</p>
+            <p>© 2025 Hızlı Video Üretici | AI Destekli Video Üretim Aracı</p>
         </footer>
     </div>
 
@@ -202,6 +292,36 @@
             const video = document.getElementById('generatedVideo');
             const videoLoading = document.getElementById('videoLoading');
             const videoError = document.getElementById('videoError');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const usedPrompt = document.getElementById('usedPrompt');
+            const regenerateForm = document.getElementById('regenerateForm');
+            const regenerateBtn = document.getElementById('regenerateBtn');
+            const regenerateError = document.getElementById('regenerateError');
+            const editedPrompt = document.getElementById('editedPrompt');
+            
+            // Video boyutu seçimi için
+            const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+            const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+            
+            // Sayfa yüklendiğinde varsayılan seçimi işaretle
+            updateSelectedAspectRatio();
+            
+            // Her bir radio input için event listener ekle
+            aspectRatioInputs.forEach(input => {
+                input.addEventListener('change', updateSelectedAspectRatio);
+            });
+            
+            // Seçilen aspect ratio'yu güncelle
+            function updateSelectedAspectRatio() {
+                aspectRatioOptions.forEach(option => {
+                    const input = option.querySelector('input');
+                    if (input.checked) {
+                        option.classList.add('selected');
+                    } else {
+                        option.classList.remove('selected');
+                    }
+                });
+            }
             
             // Video yüklendiğinde
             video.addEventListener('loadeddata', function() {
@@ -224,6 +344,85 @@
                     console.error('Video yükleme zaman aşımı');
                 }
             }, 10000);
+            
+            // Yeniden video oluşturma formu gönderildiğinde
+            regenerateForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Form verilerini al
+                const prompt = editedPrompt.value.trim();
+                const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                const brand = "{{ brand }}";
+                
+                if (!prompt) {
+                    regenerateError.textContent = "Lütfen geçerli bir prompt girin.";
+                    regenerateError.classList.remove('hidden');
+                    return;
+                }
+                
+                // Yükleme durumunu göster
+                videoLoading.classList.remove('hidden');
+                video.classList.add('hidden');
+                videoError.classList.add('hidden');
+                regenerateError.classList.add('hidden');
+                regenerateBtn.disabled = true;
+                regenerateBtn.textContent = "Video Oluşturuluyor...";
+                
+                // API isteği için form verilerini hazırla
+                const formData = new FormData();
+                formData.append('prompt', prompt);
+                formData.append('brand_input', brand);
+                formData.append('aspect_ratio', aspectRatio);
+                
+                // API isteği gönder
+                fetch('/generate_video', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Video oluşturulurken bir hata oluştu.');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Başarılı yanıt - videoyu güncelle
+                    const videoUrl = data.video_url;
+                    const newPrompt = data.prompt;
+                    
+                    // Video kaynağını güncelle
+                    video.querySelector('source').src = videoUrl;
+                    video.load(); // Videoyu yeniden yükle
+                    
+                    // İndirme bağlantısını güncelle
+                    downloadBtn.href = videoUrl;
+                    
+                    // Kullanılan prompt'u güncelle
+                    usedPrompt.textContent = newPrompt;
+                    
+                    // Buton durumunu sıfırla
+                    regenerateBtn.disabled = false;
+                    regenerateBtn.textContent = "Tekrar Üret";
+                    
+                    // Video yüklendiğinde yükleme animasyonunu gizle
+                    video.onloadeddata = function() {
+                        videoLoading.classList.add('hidden');
+                        video.classList.remove('hidden');
+                    };
+                })
+                .catch(error => {
+                    // Hata durumunda
+                    videoLoading.classList.add('hidden');
+                    videoError.classList.remove('hidden');
+                    regenerateError.textContent = error.message || 'Video oluşturulurken bir hata oluştu.';
+                    regenerateError.classList.remove('hidden');
+                    regenerateBtn.disabled = false;
+                    regenerateBtn.textContent = "Tekrar Üret";
+                    console.error('Error:', error);
+                });
+            });
         });
     </script>
 </body>

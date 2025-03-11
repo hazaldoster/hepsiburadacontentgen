@@ -192,32 +192,33 @@ def generate_prompt(text: str, feature_type: str, aspect_ratio: str = "1:1") -> 
         
         # Sistem talimatı - Her prompt için ayrı stil belirle
         system_instruction = f"""
-        Görevin, kullanıcının verdiği metin için {prompt_type} oluşturmak üzere 4 farklı prompt üretmektir.
-        
-        Her prompt için farklı bir stil belirle ve her promptun başına stilini ekle.
-        
-        Kurallar:
-        1. Her prompt en az 45, en fazla 100 kelime olmalıdır.
-        2. Her prompt farklı bir yaklaşım ve stil sunmalıdır.
-        3. Promptlar doğrudan {prompt_type} oluşturmak için kullanılabilir olmalıdır.
-        4. Her prompt için farklı ve marka kimliğine uygun bir stil belirle.
-        5. Promptlar mutlaka ingilizce olmalıdır.
-        6. Promptlar {aspect_ratio_desc} için optimize edilmelidir.
-        7. Promptlarda girilen markanın ürününün özelliklerini referans alacak metaforik ifadeler kullanılacaktır.
-        
-        Yanıtın şu formatta olmalıdır:
-        
-        STYLE1: [Birinci promptun stili]
-        [Prompt 1]
-        
-        STYLE2: [İkinci promptun stili]
-        [Prompt 2]
-        
-        STYLE3: [Üçüncü promptun stili]
-        [Prompt 3]
-        
-        STYLE4: [Dördüncü promptun stili]
-        [Prompt 4]
+        Görevin, kullanıcının verdiği metin için {prompt_type} oluşturmak üzere 4 farklı prompt üretmektir.  
+
+                Her prompt için farklı bir yaratıcı yaklaşım ve stil belirle ve her promptun başına stilini ekle.  
+
+                ### Kurallar:  
+                1. Her prompt en az 50, en fazla 120 kelime olmalıdır. Daha kapsamlı ve detaylı açıklamalar için yeterli uzunluk sağlanmalıdır.  
+                2. Her prompt farklı bir görsel ve anlatım yaklaşımı sunmalıdır. Stil, kompozisyon, atmosfer veya teknik bakış açılarıyla çeşitlilik yaratılmalıdır.  
+                3. Promptlar doğrudan {prompt_type} oluşturmak için optimize edilmelidir. Her biri, ilgili modelin en iyi sonuçları vermesi için açık, detaylı ve yönlendirici olmalıdır.  
+                4. Promptlar mutlaka İngilizce olmalıdır. Teknik ve yaratıcı detayların daha iyi işlenmesi için tüm açıklamalar İngilizce verilmelidir.  
+                5. Promptlar {aspect_ratio_desc} için optimize edilmelidir.** Belirtilen en-boy oranına uygun çerçeveleme ve perspektif detayları içermelidir.  
+                6. Görseller için ışık, renk paleti, perspektif ve detay seviyesi tanımlanmalıdır. Promptlar, modelin görsel uyumu sağlaması için estetik ve teknik öğeler içermelidir.  
+                7. Videolar için hareket, tempo, kamera açısı ve stil detayları belirtilmelidir. Video içeriklerinde sahne akışı, kamera dinamikleri ve atmosfer önemlidir.  
+                8. Her prompt, AI modelleri tarafından kolayca anlaşılabilir ve doğru yorumlanabilir olmalıdır. Fazla soyut veya muğlak ifadeler yerine, açık ve yönlendirici dil kullanılmalıdır.  
+
+                ### Yanıt formatı:  
+
+                STYLE1: [Birinci promptun stili]  
+                [Prompt 1]  
+
+                STYLE2: [İkinci promptun stili]  
+                [Prompt 2]  
+
+                STYLE3: [Üçüncü promptun stili]  
+                [Prompt 3]  
+
+                STYLE4: [Dördüncü promptun stili]  
+                [Prompt 4]  
         """
         
         # Chat completion isteği gönder
@@ -425,7 +426,7 @@ def generate_video():
             arguments = {
                 "prompt": prompt,
                 "aspect_ratio": aspect_ratio,  # Kullanıcının seçtiği aspect ratio
-                "duration": "8s"  # Maksimum süre (8 saniye)
+                "duration": "5s"  # Maksimum süre (5 saniye)
             }
             
             # Parametreleri logla
@@ -497,7 +498,7 @@ def generate_video():
                     "input": {
                         "prompt": prompt,
                         "aspect_ratio": aspect_ratio,  # Kullanıcının seçtiği aspect ratio
-                        "duration": "10s"  # Maksimum süre (8 saniye)
+                        "duration": "5s"  # Maksimum süre (5 saniye)
                     }
                 }
                 
