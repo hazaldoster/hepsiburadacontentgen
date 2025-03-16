@@ -12,6 +12,10 @@ import socket
 import urllib3
 import traceback
 import sys
+from bs4 import BeautifulSoup
+from firecrawl import FirecrawlApp
+from pydantic import BaseModel
+from typing import List
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -946,6 +950,60 @@ def check_image_status(prompt_id):
             return jsonify({"error": f"Durum kontrolü sırasında bir hata oluştu: {response.status_code}"}), response.status_code
     except Exception as e:
         logger.error(f"Durum kontrolü hatası: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# Initialize FireCrawl app
+firecrawl_app = FirecrawlApp(api_key='fc-3fe146eea8724b448ba5c838d2d94ac6')
+
+class ExtractSchema(BaseModel):
+    product_images: List[str]
+
+@app.route('/extract-images', methods=['POST'])
+def extract_images():
+    url = request.json.get('url')
+    if not url:
+        return jsonify({"error": "URL is required"}), 400
+
+    logger.info(f"Starting image extraction from URL: {url}")
+
+    try:
+        # Extract images using FireCrawl SDK
+        data = firecrawl_app.extract(
+            [url],
+            {
+                'prompt': 'Extract 5 product image URL\'s from the specified URL with 424x600px, with endpoint format : \'/format:webp\' or \'.jpg\'',
+                'schema': ExtractSchema.model_json_schema(),
+            }
+        )
+
+        logger.info(f"FireCrawl API response received: {json.dumps(data)[:200]}...")
+        
+        # Extract image URLs from the response
+        images = []
+        if data and isinstance(data, dict):
+            if 'data' in data and isinstance(data['data'], dict):
+                # Extract from data.product_images
+                if 'product_images' in data['data']:
+                    images.extend(data['data']['product_images'])
+            elif 'results' in data and isinstance(data['results'], list):
+                # Extract from results[0].product_images
+                for result in data['results']:
+                    if isinstance(result, dict) and 'product_images' in result:
+                        images.extend(result['product_images'])
+        
+        # Limit to 5 images if more are returned
+        images = images[:5]
+        
+        # Log extracted images
+        logger.info(f"Successfully extracted {len(images)} images from {url}")
+        for idx, img_url in enumerate(images, 1):
+            logger.info(f"Image {idx}: {img_url}")
+        
+        return jsonify({"images": images})
+
+    except Exception as e:
+        logger.error(f"Error extracting images from {url}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 # Add error handlers
