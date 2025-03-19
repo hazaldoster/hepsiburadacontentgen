@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hızlı Görsel Üretici</title>
+    <title>Yaratıcı Görsel Üretici</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -32,6 +32,7 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
+        /* Prompt kartı seçildiğinde pulsating efekti */
         .selected-card {
             animation: pulse-border 2s infinite;
         }
@@ -47,6 +48,7 @@
                 border-color: rgba(139, 92, 246, 0.3);
             }
         }
+        /* Gradient overlay için nefes alma animasyonu */
         .breathing-gradient {
             animation: breathing-gradient 3s ease-in-out infinite;
         }
@@ -62,6 +64,38 @@
                 opacity: 0.3;
             }
         }
+        /* Aspect ratio seçimi için stil */
+        .aspect-ratio-option {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .aspect-ratio-option.selected {
+            transform: translateY(-3px);
+        }
+        .aspect-ratio-option.selected::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border-radius: 0.5rem;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+        /* Görsel galerisi için stil */
         .image-gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -86,6 +120,7 @@
             opacity: 0.9;
         }
         
+        /* Modern yükleme animasyonları */
         .loader-container {
             display: flex;
             flex-direction: column;
@@ -94,6 +129,7 @@
             padding: 2rem;
         }
         
+        /* Prompt yükleme animasyonu */
         .prompt-loader {
             width: 80px;
             height: 80px;
@@ -164,6 +200,7 @@
             }
         }
         
+        /* Görsel yükleme animasyonu */
         .image-loader {
             width: 100px;
             height: 100px;
@@ -202,6 +239,7 @@
             }
         }
         
+        /* Yükleme metni animasyonu */
         .loading-text {
             font-weight: 500;
             background: linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6);
@@ -216,109 +254,7 @@
                 background-position: 200% center;
             }
         }
-        #extractedImagesGrid img {
-            transition: transform 0.2s ease-in-out;
-        }
-        #extractedImagesGrid img:hover {
-            transform: scale(1.05);
-        }
-        .selected-image {
-            border-color: #8B5CF6 !important;
-            --tw-ring-color: #8B5CF6 !important;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 50;
-            overflow: auto;
-        }
-        
-        .modal-content {
-            position: relative;
-            margin: auto;
-            padding: 20px;
-            max-width: 90%;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .modal-content img {
-            max-width: 100%;
-            max-height: 75vh;
-            object-fit: contain;
-            margin-bottom: 20px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .modal-button {
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .modal-submit {
-            background: linear-gradient(to right, #8B5CF6, #EC4899);
-            color: white;
-        }
-
-        .modal-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-        }
-
-        .modal-cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-cancel:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            color: #fff;
-            font-size: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 51;
-            width: 40px;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-        
-        .close-modal:hover {
-            background: rgba(0, 0, 0, 0.8);
-            transform: scale(1.1);
-        }
-        
-        #extractedImagesGrid img {
-            cursor: zoom-in;
-        }
     </style>
-    <script src="{{ url_for('static', filename='js/scrape.do.js') }}"></script>
 </head>
 <body class="text-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -332,78 +268,75 @@
         </div>
 
         <header class="mb-12 text-center">
-            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Görsel Üretici</h1>
-            <p class="text-gray-400 max-w-2xl mx-auto">Web sitesi URL'sini girin, yapay zeka sizin için özel promptlar oluştursun ve etkileyici görseller üretsin.</p>
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Yaratıcı Görsel Üretici</h1>
+            <p class="text-gray-400 max-w-2xl mx-auto">İşte sizin için oluşturduğumuz görseller!</p>
         </header>
 
         <div class="max-w-6xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
             <div class="p-6">
-                <form id="imageForm" class="mb-6">
-                    <div class="mb-4">
-                        <label for="brandInput" class="block text-gray-300 mb-2 font-medium">URL Girin</label>
-                        <input type="url" id="brandInput" name="brand_input" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="https://example.com" required>
+                <div id="imageResult" class="mt-8">
+                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Görseller</h2>
+                    
+                    <!-- Görsel Galerisi -->
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        {% if image_urls and image_urls|length > 0 %}
+                        <div class="image-gallery">
+                            {% for image_url in image_urls %}
+                            <div class="image-item">
+                                <a href="{{ image_url }}" target="_blank" class="block">
+                                    <img src="{{ image_url }}" alt="Oluşturulan Görsel {{ loop.index }}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
+                                </a>
+                                <div class="mt-2 flex justify-center">
+                                    <a href="{{ image_url }}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                        Görseli Aç ve Kaydet
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Tüm görselleri indirme butonu kaldırıldı -->
+                        {% else %}
+                        <div class="text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-purple-500 mb-4"></div>
+                            <p class="text-gray-300">Görseller yükleniyor veya henüz oluşturulmadı...</p>
+                            <p class="text-gray-400 mt-2">Lütfen bekleyin veya yeni bir görsel oluşturun.</p>
+                        </div>
+                        {% endif %}
                     </div>
                     
-                    <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                        Görselleri Getir
-                    </button>
-                </form>
-
-                <div id="extractedImagesContainer" class="mt-8 hidden">
-                    <h3 class="text-xl font-semibold mb-4 text-purple-400">Çıkarılan Görseller</h3>
-                    <p class="mb-4 text-gray-300">Lütfen bir görsel seçin:</p>
-                    <div id="extractedImagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
+                        <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ prompt }}</p>
                     </div>
-                </div>
-
-                <!-- Loading Animation -->
-                <div id="loadingAnimation" class="hidden mt-8">
-                    <div class="flex flex-col items-center justify-center p-8">
-                        <div class="prompt-loader mb-4">
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                        </div>
-                        <p class="text-lg font-medium text-purple-400">Görseller Yükleniyor...</p>
-                        <p class="text-sm text-gray-400 mt-2">Lütfen bekleyin</p>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
+                        <p id="brandInfo" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ brand }}</p>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Ölçü Oranı:</h3>
+                        <p id="usedAspectRatio" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ aspect_ratio }}</p>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <a href="{{ url_for('image') }}" class="inline-block py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                            Yeni Görsel Oluştur
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
         
         <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2025 Hızlı Görsel Üretici | AI Destekli Görsel Üretim Aracı</p>
+            <p>© 2025 Yaratıcı Görsel Üretici | AI Destekli Görsel Üretim Aracı</p>
         </footer>
     </div>
 
-    <!-- Modal -->
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4 relative">
-            <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            <div class="mt-4">
-                <img id="modalImage" src="" alt="Selected image" class="max-h-[80vh] mx-auto">
-            </div>
-            <div class="mt-4 flex justify-end space-x-2">
-                <button onclick="closeModal()" class="modal-button modal-cancel">Vazgeç</button>
-                <button onclick="submitImageSelectionAndClose()" class="modal-button modal-submit">Bu Görseli Seç</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let currentImageContainer = null;
-
         document.addEventListener('DOMContentLoaded', function() {
+            // Görsellerin yüklenmesini kontrol et
             const images = document.querySelectorAll('.image-gallery img');
             images.forEach(img => {
                 img.addEventListener('error', function() {
@@ -415,396 +348,679 @@
                 });
             });
             
-            const imageForm = document.getElementById('imageForm');
-            const extractedImagesContainer = document.getElementById('extractedImagesContainer');
-            const extractedImagesGrid = document.getElementById('extractedImagesGrid');
+            // İndirme fonksiyonları kaldırıldı
             
-            imageForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const brandInput = document.getElementById('brandInput').value;
-                if (!brandInput) {
-                    alert('Lütfen geçerli bir URL girin');
-                    return;
-                }
-
-                // Store the input value in session storage
-                sessionStorage.setItem('lastBrandInput', brandInput);
-                
-                // Refresh the page
-                window.location.reload();
-                return;
-            });
-
-            // Check for stored input value when page loads
-            (async function() {
-                const lastBrandInput = sessionStorage.getItem('lastBrandInput');
-                if (lastBrandInput) {
-                    // Clear the stored value
-                    sessionStorage.removeItem('lastBrandInput');
-                    
-                    // Set the input value
-                    document.getElementById('brandInput').value = lastBrandInput;
-                    
-                    try {
-                        // Show loading animation
-                        document.getElementById('loadingAnimation').classList.remove('hidden');
-                        imageForm.classList.add('opacity-50', 'pointer-events-none');
-                        
-                        const extractResponse = await fetch('/extract-images', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ url: lastBrandInput })
-                        });
-
-                        const extractData = await extractResponse.json();
-                        
-                        if (extractData.error) {
-                            throw new Error(extractData.error);
-                        }
-
-                        extractedImagesGrid.innerHTML = '';
-
-                        if (extractData.product_images && extractData.product_images.length > 0) {
-                            // Hide loading animation
-                            document.getElementById('loadingAnimation').classList.add('hidden');
-                            extractedImagesContainer.classList.remove('hidden');
-                            
-                            extractData.product_images.forEach((imageUrl, index) => {
-                                const imageContainer = document.createElement('div');
-                                imageContainer.className = 'relative border-2 border-transparent rounded-lg cursor-pointer hover:border-purple-500 transition-all';
-                                imageContainer.setAttribute('data-url', imageUrl);
-                                
-                                const img = document.createElement('img');
-                                img.src = imageUrl;
-                                img.alt = `Extracted image ${index + 1}`;
-                                img.className = 'w-full h-48 object-cover rounded-lg';
-                                
-                                const loadingOverlay = document.createElement('div');
-                                loadingOverlay.className = 'absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center';
-                                loadingOverlay.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>';
-                                imageContainer.appendChild(loadingOverlay);
-                                
-                                img.onload = function() {
-                                    loadingOverlay.remove();
-                                };
-                                
-                                img.onerror = function() {
-                                    loadingOverlay.innerHTML = '<p class="text-red-400 text-sm">Görsel yüklenemedi</p>';
-                                };
-                                
-                                imageContainer.appendChild(img);
-                                
-                                imageContainer.addEventListener('click', function(e) {
-                                    if (e.target.tagName === 'IMG') {
-                                        const imageUrl = this.getAttribute('data-url');
-                                        currentImageContainer = this;
-                                        showModal(imageUrl);
-                                        e.stopPropagation();
-                                    }
-                                });
-                                
-                                extractedImagesGrid.appendChild(imageContainer);
-                            });
-                        } else {
-                            throw new Error('Görsel bulunamadı');
-                        }
-                    } catch (error) {
-                        // Hide loading animation on error
-                        document.getElementById('loadingAnimation').classList.add('hidden');
-                        alert('Hata: ' + error.message);
-                    } finally {
-                        imageForm.classList.remove('opacity-50', 'pointer-events-none');
-                    }
-                }
-            })();
-        });
-
-        function showModal(imageUrl) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            modalImg.src = imageUrl;
-            modal.classList.remove('hidden');
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('hidden');
-        }
-
-        async function checkGenerationStatus(requestId) {
-            if (!requestId) return null;
+            // URL parametrelerini kontrol et
+            const urlParams = new URLSearchParams(window.location.search);
+            const promptId = urlParams.get('prompt_id');
+            const imageUrl = urlParams.get('image_url');
+            const imageUrls = urlParams.getAll('image_url');
             
-            try {
-                const response = await fetch(`/check_status/${requestId}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+            // Görselleri görüntülemek için fonksiyon
+            function displayImages(imageUrls, prompt, brandInput, aspectRatio) {
+                // Yükleme animasyonunu gizle
+                const loaderContainer = document.querySelector('#imageResult .text-center.py-8');
+                if (loaderContainer) {
+                    loaderContainer.classList.add('hidden');
                 }
-                const data = await response.json();
-                console.log('Status check response:', data);
-                return data;
-            } catch (error) {
-                console.error('Status check error:', error);
-                return null;
-            }
-        }
-
-        async function submitImageSelectionAndClose() {
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('hidden');
-            await submitImageSelection();
-        }
-
-        async function submitImageSelection() {
-            if (!currentImageContainer) {
-                console.warn('⚠️ Görsel seçilmedi!');
-                alert('Lütfen bir görsel seçin');
-                return;
-            }
-
-            const selectedImageUrl = currentImageContainer.getAttribute('data-url');
-            console.log('🖼️ Seçilen görsel:', selectedImageUrl);
-
-            // Create a container for generated images if it doesn't exist
-            let generatedImagesContainer = document.getElementById('generatedImagesContainer');
-            if (!generatedImagesContainer) {
-                generatedImagesContainer = document.createElement('div');
-                generatedImagesContainer.id = 'generatedImagesContainer';
-                generatedImagesContainer.className = 'mt-8';
-                generatedImagesContainer.innerHTML = `
-                    <h3 class="text-xl font-semibold mb-4 text-purple-400">Üretilen Görseller</h3>
-                    <div id="generatedImagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4"></div>
-                `;
                 
-                // Add the container after extractedImagesContainer
-                const extractedImagesContainer = document.getElementById('extractedImagesContainer');
-                extractedImagesContainer.parentNode.insertBefore(generatedImagesContainer, extractedImagesContainer.nextSibling);
-            }
-
-            const generatedImagesGrid = document.getElementById('generatedImagesGrid');
-            generatedImagesGrid.innerHTML = ''; // Clear previous images
-
-            try {
-                // Add loading indicator for prompt generation
-                const loadingPrompt = document.createElement('div');
-                loadingPrompt.className = 'col-span-2 text-center p-4';
-                loadingPrompt.innerHTML = `
-                    <div class="flex flex-col items-center">
-                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-                        <p class="text-gray-400 text-sm mt-4">Promptlar oluşturuluyor...</p>
-                    </div>
-                `;
-                generatedImagesGrid.appendChild(loadingPrompt);
-
-                // Generate prompts for the selected image - NOW this happens only after image selection
-                const promptResponse = await fetch('/generate-prompt', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        text: selectedImageUrl,
-                        feature_type: 'image'
-                    })
-                });
-
-                const promptData = await promptResponse.json();
-                if (promptData.error) {
-                    throw new Error(promptData.error);
+                // Prompt ve brand bilgilerini güncelle
+                const promptElement = document.getElementById('usedPrompt');
+                const brandElement = document.getElementById('brandInfo');
+                const aspectRatioElement = document.getElementById('usedAspectRatio');
+                
+                if (promptElement) {
+                    promptElement.textContent = prompt;
                 }
-
-                // Remove loading indicator
-                loadingPrompt.remove();
-
-                // Log prompts to console
-                if (promptData.prompt_data && promptData.prompt_data.length > 0) {
-                    console.log('\n📝 Seçilen Görsel için Oluşturulan Promptlar:');
-                    
-                    // Create loading placeholders for all images
-                    const loadingContainers = promptData.prompt_data.map((_, index) => {
-                        const loadingContainer = document.createElement('div');
-                        loadingContainer.className = 'relative border-2 border-transparent rounded-lg min-h-[300px] bg-gray-800 flex items-center justify-center';
-                        loadingContainer.innerHTML = `
-                            <div class="flex flex-col items-center">
-                                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-                                <p class="text-gray-400 text-sm mt-4">Görsel ${index + 1} üretiliyor...</p>
-                                <p class="text-gray-500 text-xs mt-2 status-text">Başlatılıyor...</p>
+                
+                if (brandElement) {
+                    brandElement.textContent = brandInput;
+                }
+                
+                if (aspectRatioElement) {
+                    aspectRatioElement.textContent = aspectRatio;
+                }
+                
+                // Görsel galerisini tekrar seç (oluşturulmuş olabilir)
+                const gallery = document.querySelector('.image-gallery');
+                if (gallery) {
+                    // Görselleri ekle
+                    gallery.innerHTML = '';
+                    imageUrls.forEach((url, index) => {
+                        const imageItem = document.createElement('div');
+                        imageItem.className = 'image-item';
+                        imageItem.innerHTML = `
+                            <a href="${url}" target="_blank" class="block">
+                                <img src="${url}" alt="Oluşturulan Görsel ${index + 1}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
+                            </a>
+                            <div class="mt-2 flex justify-center">
+                                <a href="${url}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    Görseli Aç ve Kaydet
+                                </a>
                             </div>
                         `;
-                        generatedImagesGrid.appendChild(loadingContainer);
-                        return loadingContainer;
+                        gallery.appendChild(imageItem);
                     });
                     
-                    try {
-                        // Generate all images at once
-                        const response = await fetch('/generate_image', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                prompt_data: promptData.prompt_data,
-                                image_url: selectedImageUrl
-                            })
-                        });
-                        
-                        const imageData = await response.json();
-                        
-                        if (imageData.error) {
-                            throw new Error(imageData.error);
-                        }
-
-                        console.log('✅ Fal.ai\'den yanıt alındı:', imageData);
-
-                        if (imageData.generated_images && imageData.generated_images.length > 0) {
-                            imageData.generated_images.forEach((genImage, index) => {
-                                const loadingContainer = loadingContainers[index];
-                                
-                                // Create image container
-                                const imageContainer = document.createElement('div');
-                                imageContainer.className = 'relative border-2 border-transparent rounded-lg overflow-hidden cursor-pointer bg-gray-800';
-                                
-                                const img = document.createElement('img');
-                                img.src = genImage.image_url;
-                                img.alt = `Generated image ${index + 1}`;
-                                img.className = 'w-full h-[300px] object-cover rounded-lg';
-                                
-                                // Add click event to container
-                                imageContainer.addEventListener('click', () => {
-                                    showImageModal(genImage.image_url, index + 1);
-                                });
-
-                                imageContainer.appendChild(img);
-                                
-                                // Replace loading placeholder with actual image container
-                                loadingContainer.replaceWith(imageContainer);
-                            });
-                        }
-
-                    } catch (error) {
-                        console.error('❌ Görsel üretme hatası:', error);
-                        loadingContainers.forEach(container => {
-                            container.innerHTML = `
-                                <div class="text-red-400 text-center p-4">
-                                    <p class="font-semibold mb-2">Görsel üretilemedi</p>
-                                    <p class="text-sm">${error.message}</p>
+                    // Görsellerin yüklenmesini kontrol et
+                    const images = gallery.querySelectorAll('img');
+                    images.forEach(img => {
+                        img.addEventListener('error', function() {
+                            this.parentNode.innerHTML = `
+                                <div class="flex items-center justify-center h-48 bg-gray-800 rounded-lg">
+                                    <p class="text-red-400 text-sm">Görsel yüklenemedi</p>
                                 </div>
                             `;
                         });
+                    });
+                } else {
+                    // Eğer galeri yoksa, yükleme animasyonunu gizle ve galeri oluştur
+                    const galleryContainer = document.querySelector('#imageResult .bg-gray-900.p-4.rounded-lg');
+                    if (galleryContainer) {
+                        // Yükleme animasyonunu gizle
+                        const loaderContainer = galleryContainer.querySelector('.text-center.py-8');
+                        if (loaderContainer) {
+                            loaderContainer.classList.add('hidden');
+                        }
+                        
+                        // Galeri oluştur
+                        const newGallery = document.createElement('div');
+                        newGallery.className = 'image-gallery';
+                        galleryContainer.appendChild(newGallery);
+                        
+                        // Görselleri ekle
+                        imageUrls.forEach((url, index) => {
+                            const imageItem = document.createElement('div');
+                            imageItem.className = 'image-item';
+                            imageItem.innerHTML = `
+                                <a href="${url}" target="_blank" class="block">
+                                    <img src="${url}" alt="Oluşturulan Görsel ${index + 1}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
+                                </a>
+                                <div class="mt-2 flex justify-center">
+                                    <a href="${url}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                        Görseli Aç ve Kaydet
+                                    </a>
+                                </div>
+                            `;
+                            newGallery.appendChild(imageItem);
+                        });
                     }
                 }
-
-                // Close the modal
-                closeModal();
-
-                // Add selected class to the image container
-                document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-                currentImageContainer.classList.add('selected');
-
-            } catch (error) {
-                console.error('❌ Prompt oluşturma hatası:', error);
-                alert('Prompt oluşturulurken bir hata oluştu: ' + error.message);
             }
-        }
-
-        // Make functions globally available
-        window.showModal = showModal;
-        window.closeModal = closeModal;
-        window.submitImageSelection = submitImageSelection;
-
-        function showImageModal(imageUrl, imageIndex) {
-            // Create modal container
-            const modalContainer = document.createElement('div');
-            modalContainer.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-90 transition-opacity duration-300';
-            modalContainer.style.opacity = '0';
-
-            // Create modal content
-            const modalContent = document.createElement('div');
-            modalContent.className = 'relative max-w-4xl w-full bg-gray-900 rounded-lg shadow-xl transform transition-transform duration-300 scale-95';
             
-            // Create close button
-            const closeButton = document.createElement('button');
-            closeButton.className = 'absolute top-4 right-4 text-gray-400 hover:text-white z-50 p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors duration-200';
-            closeButton.innerHTML = `
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            `;
-            closeButton.onclick = () => {
-                modalContainer.style.opacity = '0';
-                modalContent.classList.remove('scale-100');
-                modalContent.classList.add('scale-95');
-                setTimeout(() => modalContainer.remove(), 300);
-            };
-
-            // Create image container
-            const imageContainer = document.createElement('div');
-            imageContainer.className = 'p-4';
-            
-            const modalImage = document.createElement('img');
-            modalImage.src = imageUrl;
-            modalImage.alt = `Generated image ${imageIndex}`;
-            modalImage.className = 'w-full max-h-[70vh] object-contain rounded-lg';
-
-            // Create download button
-            const downloadButton = document.createElement('button');
-            downloadButton.className = 'mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105';
-            downloadButton.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span>Görseli İndir</span>
-            `;
-            
-            downloadButton.onclick = async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+            // Görsel durumunu kontrol eden ve gösteren fonksiyon
+            function checkImageStatusAndDisplay(promptId, prompt, brand) {
+                // Görsel sonuç alanını göster - bu yeterli olacak
+                imageResult.classList.remove('hidden');
                 
-                try {
-                    const response = await fetch(imageUrl);
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `generated-image-${imageIndex}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+                // Seçilen aspect ratio değerini al
+                const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                
+                // Durum kontrolü için fonksiyon
+                function checkStatus() {
+                    fetch(`/check_image_status/${promptId}?aspect_ratio=${aspectRatio}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.is_ready && data.image_urls && data.image_urls.length > 0) {
+                                // Görseller hazırsa, sayfayı yenilemeden görselleri göster
+                                displayImages(data.image_urls, data.prompt || prompt, data.brand || brand, data.aspect_ratio || aspectRatio);
+                                
+                                // Kontrol döngüsünü durdur
+                                clearInterval(statusInterval);
+                                
+                                // Butonu sıfırla
+                                resetCreateButton();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Durum kontrolü hatası:', error);
+                        });
+                }
+                
+                // İlk kontrolü hemen yap
+                checkStatus();
+                
+                // 5 saniyede bir kontrol et
+                const statusInterval = setInterval(checkStatus, 5000);
+                
+                // 60 saniye sonra kontrolü durdur
+                setTimeout(() => {
+                    clearInterval(statusInterval);
                     
-                    console.log('✅ Görsel başarıyla indirildi');
-                } catch (error) {
-                    console.error('❌ Görsel indirme hatası:', error);
-                    alert('Görsel indirilirken bir hata oluştu');
+                    // Eğer hala görseller yüklenmediyse, butonu sıfırla
+                    resetCreateButton();
+                }, 60000);
+            }
+            
+            // Eğer prompt_id varsa ve görseller yoksa, durumu periyodik olarak kontrol et
+            if (promptId && (!imageUrls || imageUrls.length === 0)) {
+                checkImageStatusAndDisplay(promptId, urlParams.get('prompt') || '', urlParams.get('brand') || '');
+            }
+            
+            // Eğer image_url parametresi yoksa, form sayfasını göster
+            if (!imageUrl && !promptId) {
+                // Form sayfası HTML'ini oluştur
+                document.querySelector('.container').innerHTML = `
+                    <div class="flex items-center mb-6">
+                        <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Ana Sayfa
+                        </a>
+                    </div>
+
+                    <header class="mb-12 text-center">
+                        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Yaratıcı Görsel Üretici</h1>
+                        <p class="text-gray-400 max-w-2xl mx-auto">AI destekli görseller oluşturun. Oluşturmak istediğiniz görseller için bir prompt girin, promptlar oluşturalım ve harika görseller üretelim.</p>
+                    </header>
+
+                    <div class="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+                        <div class="p-6">
+                            <form id="imageForm" class="mb-6">
+                                <div class="mb-4">
+                                    <label for="brandInput" class="block text-gray-300 mb-2 font-medium"></label>
+                                    <textarea id="brandInput" name="brand_input" rows="4" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="Oluşturmak istediğiniz görseller için bir prompt girin..."></textarea>
+                                </div>
+                                
+                                <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                                    Görsel Promptları Oluştur
+                                </button>
+                            </form>
+
+                            <div id="loadingPrompts" class="hidden text-center py-8">
+                                <div class="loader-container">
+                                    <div class="prompt-loader">
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                        <div></div>
+                                    </div>
+                                    <p class="loading-text text-xl">Yaratıcı fikirler oluşturuluyor...</p>
+                                    <p class="text-gray-400 mt-2">Yapay zeka sizin için en iyi promptları hazırlıyor</p>
+                                </div>
+                            </div>
+
+                            <div id="promptResults" class="hidden">
+                                <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Promptlar</h2>
+                                <p class="text-gray-400 mb-4">Beğendiğiniz promptu seçin ve görsel oluşturun.</p>
+                                
+                                <div class="prompt-container grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Promptlar JavaScript ile buraya eklenecek -->
+                                </div>
+                                
+                                <!-- Görsel Boyutu seçimi promptların altına taşındı -->
+                                <div class="mt-6 mb-4">
+                                    <label class="block text-gray-300 mb-2 font-medium">Görsel Boyutu</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors selected">
+                                            <input type="radio" name="aspectRatio" value="1:1" class="sr-only aspect-ratio-input" checked>
+                                            <div class="w-14 h-14 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-12 h-12 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">1:1</span>
+                                            <span class="text-gray-400 text-xs mt-1">Kare (Instagram, Facebook)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="4:5" class="sr-only aspect-ratio-input">
+                                            <div class="w-12 h-15 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-10 h-12 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">4:5</span>
+                                            <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Post)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="16:9" class="sr-only aspect-ratio-input">
+                                            <div class="w-16 h-9 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-14 h-7 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">16:9</span>
+                                            <span class="text-gray-400 text-xs mt-1">Yatay (Web, LinkedIn)</span>
+                                        </label>
+                                        <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                            <input type="radio" name="aspectRatio" value="9:16" class="sr-only aspect-ratio-input">
+                                            <div class="w-12 h-16 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
+                                                <div class="w-8 h-14 bg-gray-300 rounded-sm"></div>
+                                            </div>
+                                            <span class="text-gray-300 font-medium">9:16</span>
+                                            <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Stories)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Görsel Oluştur butonu -->
+                                <div class="mt-8 text-center">
+                                    <button id="createImageBtn" class="py-3 px-8 text-white font-medium rounded-lg shadow-lg transition duration-300 opacity-50 cursor-not-allowed bg-gray-600" disabled>
+                                        Görsel Oluştur
+                                    </button>
+                                    <p class="text-gray-400 text-sm mt-2">Lütfen önce bir prompt seçin</p>
+                                </div>
+                            </div>
+
+                            <div id="imageLoading" class="hidden text-center py-8">
+                                <div class="loader-container">
+                                    <div class="image-loader"></div>
+                                    <p class="loading-text text-xl">Görsel sanat yaratılıyor...</p>
+                                    <p class="text-gray-400 mt-2">Bu işlem birkaç dakika sürebilir. Lütfen bekleyin.</p>
+                                </div>
+                            </div>
+                            
+                            <div id="imageResult" class="hidden mt-8">
+                                <h2 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Görseller</h2>
+                                
+                                <!-- Görsel Galerisi -->
+                                <div class="bg-gray-900 p-4 rounded-lg">
+                                    <div class="text-center py-8">
+                                        <div class="loader-container">
+                                            <div class="image-loader"></div>
+                                            <p class="loading-text text-xl">Görsel sanat yaratılıyor...</p>
+                                            <p class="text-gray-400 mt-2">Bu işlem birkaç dakika sürebilir. Lütfen bekleyin.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
+                                    <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
+                                    <p id="brandInfo" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Ölçü Oranı:</h3>
+                                    <p id="usedAspectRatio" class="text-gray-400 bg-gray-700 p-3 rounded-lg"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <footer class="mt-12 text-center text-gray-500 text-sm">
+                        <p>© 2025 | AI Destekli Görsel Üretim Aracı</p>
+                    </footer>
+                `;
+
+                // Form ve diğer elementleri seç
+                const imageForm = document.getElementById('imageForm');
+                const loadingPrompts = document.getElementById('loadingPrompts');
+                const promptResults = document.getElementById('promptResults');
+                const promptContainer = document.querySelector('.prompt-container');
+                const imageLoading = document.getElementById('imageLoading');
+                const imageResult = document.getElementById('imageResult');
+                
+                // Seçilen prompt için global değişken
+                let selectedPrompt = null;
+                
+                // Aspect ratio seçimi için
+                const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+                const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+                
+                // Sayfa yüklendiğinde varsayılan seçimi işaretle
+                updateSelectedAspectRatio();
+                
+                // Her bir radio input için event listener ekle
+                aspectRatioInputs.forEach(input => {
+                    input.addEventListener('change', updateSelectedAspectRatio);
+                });
+                
+                // Seçilen aspect ratio'yu güncelle
+                function updateSelectedAspectRatio() {
+                    aspectRatioOptions.forEach(option => {
+                        const input = option.querySelector('input');
+                        if (input.checked) {
+                            option.classList.add('selected');
+                        } else {
+                            option.classList.remove('selected');
+                        }
+                    });
                 }
-            };
-
-            // Add keyboard event listener for closing modal with Escape key
-            const handleKeyDown = (e) => {
-                if (e.key === 'Escape') {
-                    closeButton.click();
-                    document.removeEventListener('keydown', handleKeyDown);
+                
+                // Form gönderildiğinde
+                imageForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const brandInput = document.getElementById('brandInput').value;
+                    if (!brandInput) {
+                        alert('Lütfen marka/ürün bilgisi girin');
+                        return;
+                    }
+                    
+                    // Seçilen aspect ratio değerini al
+                    const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                    
+                    // Eski promptları gizle
+                    promptResults.classList.add('hidden');
+                    promptContainer.innerHTML = ''; // Eski promptları temizle
+                    
+                    // Promptları oluşturma işlemi
+                    loadingPrompts.classList.remove('hidden');
+                    
+                    // API'ye istek at
+                    fetch('/generate-prompt', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: brandInput,
+                            feature_type: 'image',
+                            aspect_ratio: aspectRatio
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Prompt oluşturma hatası');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        loadingPrompts.classList.add('hidden');
+                        promptResults.classList.remove('hidden');
+                        
+                        // API'den gelen promptları ekrana ekle
+                        promptContainer.innerHTML = '';
+                        data.prompt_data.forEach((item, index) => {
+                            const promptCard = document.createElement('div');
+                            promptCard.className = 'bg-gradient-to-br from-gray-700 to-gray-800 p-4 rounded-lg cursor-pointer hover:from-gray-600 hover:to-gray-700 transition-all duration-300 border border-transparent relative overflow-hidden';
+                            
+                            // Prompt ID'si oluştur
+                            const promptId = `prompt-${index}`;
+                            const textareaId = `textarea-${index}`;
+                            
+                            // Prompt kartı içeriği
+                            promptCard.innerHTML = `
+                                <div class="mb-2">
+                                    <h3 class="font-medium text-purple-300 text-center">${item.style}</h3>
+                                </div>
+                                <div class="prompt-content" id="${promptId}">
+                                    <p class="text-gray-300">${item.prompt}</p>
+                                </div>
+                                <div class="prompt-edit hidden" id="${textareaId}">
+                                    <textarea class="w-full bg-gray-800 text-gray-300 p-2 rounded mb-2" rows="5">${item.prompt}</textarea>
+                                    <div class="flex justify-center space-x-2">
+                                        <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            İptal
+                                        </button>
+                                        <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                            Kaydet
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex justify-center">
+                                    <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors" data-index="${index}">
+                                        Düzenle
+                                    </button>
+                                </div>
+                                <!-- Check mark icon (initially hidden) -->
+                                <div class="absolute top-2 right-2 bg-purple-500 rounded-full p-1 scale-0 transition-transform duration-300 check-mark">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <!-- Gradient overlay for selected card (initially transparent) -->
+                                <div class="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-pink-600/0 transition-all duration-500 pointer-events-none gradient-overlay"></div>
+                            `;
+                            
+                            promptContainer.appendChild(promptCard);
+                            
+                            // Prompt kartına tıklama olayı ekle
+                            const promptContent = promptCard.querySelector(`#${promptId}`);
+                            promptContent.addEventListener('click', function() {
+                                // Seçilen aspect ratio değerini al
+                                const currentAspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                                
+                                // Tüm prompt kartlarını normal stile döndür
+                                const allPromptCards = document.querySelectorAll('.prompt-container > div');
+                                allPromptCards.forEach(card => {
+                                    // Eski vurgulamaları kaldır
+                                    card.classList.remove('ring-2', 'ring-purple-500', 'ring-offset-2', 'ring-offset-gray-800');
+                                    card.classList.remove('from-purple-700', 'to-purple-900');
+                                    card.classList.add('from-gray-700', 'to-gray-800');
+                                    
+                                    // Check mark'ı gizle
+                                    const checkMark = card.querySelector('.check-mark');
+                                    if (checkMark) checkMark.classList.remove('scale-100');
+                                    checkMark.classList.add('scale-0');
+                                    
+                                    // Gradient overlay'i sıfırla
+                                    const overlay = card.querySelector('.gradient-overlay');
+                                    if (overlay) {
+                                        overlay.classList.remove('from-purple-600/50', 'to-pink-600/50', 'breathing-gradient');
+                                        overlay.classList.add('from-purple-600/0', 'to-pink-600/0');
+                                    }
+                                });
+                                
+                                // Bu kartı vurgula
+                                // Check mark'ı göster
+                                const checkMark = promptCard.querySelector('.check-mark');
+                                if (checkMark) {
+                                    checkMark.classList.remove('scale-0');
+                                    checkMark.classList.add('scale-100');
+                                }
+                                
+                                // Gradient overlay'i etkinleştir
+                                const overlay = promptCard.querySelector('.gradient-overlay');
+                                if (overlay) {
+                                    overlay.classList.remove('from-purple-600/0', 'to-pink-600/0');
+                                    overlay.classList.add('from-purple-600/50', 'to-pink-600/50', 'breathing-gradient');
+                                }
+                                
+                                // Pulsating animasyonu ekle
+                                promptCard.classList.add('selected-card');
+                                
+                                // Seçilen promptu global değişkene kaydet
+                                selectedPrompt = item.prompt;
+                                
+                                // Görsel oluşturma butonunu etkinleştir
+                                const createImageBtn = document.getElementById('createImageBtn');
+                                if (createImageBtn) {
+                                    createImageBtn.disabled = false;
+                                    createImageBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-600');
+                                    createImageBtn.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:from-purple-700', 'hover:to-pink-700', 'hover:scale-105');
+                                }
+                            });
+                            
+                            // Düzenle butonuna tıklama olayı ekle
+                            const editBtn = promptCard.querySelector('.edit-btn');
+                            editBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Düzenleme modunu aç
+                                const promptContent = document.getElementById(promptId);
+                                const promptEdit = document.getElementById(textareaId);
+                                
+                                promptContent.classList.add('hidden');
+                                promptEdit.classList.remove('hidden');
+                            });
+                            
+                            // İptal butonuna tıklama olayı ekle
+                            const cancelBtn = promptCard.querySelector('.cancel-btn');
+                            cancelBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Düzenleme modunu kapat
+                                const promptContent = document.getElementById(promptId);
+                                const promptEdit = document.getElementById(textareaId);
+                                
+                                promptContent.classList.remove('hidden');
+                                promptEdit.classList.add('hidden');
+                                
+                                // Textarea içeriğini orijinal prompt ile değiştir
+                                const textarea = promptEdit.querySelector('textarea');
+                                textarea.value = item.prompt;
+                            });
+                            
+                            // Kaydet butonuna tıklama olayı ekle
+                            const saveBtn = promptCard.querySelector('.save-btn');
+                            saveBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Kartın tıklama olayını engelle
+                                
+                                // Yeni prompt değerini al
+                                const textarea = document.querySelector(`#${textareaId} textarea`);
+                                const newPrompt = textarea.value.trim();
+                                
+                                if (newPrompt) {
+                                    // Prompt değerini güncelle
+                                    item.prompt = newPrompt;
+                                    
+                                    // Görünümü güncelle
+                                    const promptContent = document.getElementById(promptId);
+                                    promptContent.querySelector('p').textContent = newPrompt;
+                                    
+                                    // Düzenleme modunu kapat
+                                    promptContent.classList.remove('hidden');
+                                    document.getElementById(textareaId).classList.add('hidden');
+                                }
+                            });
+                        });
+                        
+                        // Aspect ratio seçimini güncelle
+                        updateSelectedAspectRatio();
+                        
+                        // Görsel Oluştur butonuna tıklama olayı ekle
+                        const createImageBtn = document.getElementById('createImageBtn');
+                        if (createImageBtn) {
+                            createImageBtn.addEventListener('click', function() {
+                                if (selectedPrompt) {
+                                    // Seçilen aspect ratio değerini al
+                                    const currentAspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                                    // Görsel oluştur
+                                    generateImage(selectedPrompt, brandInput, currentAspectRatio);
+                                    
+                                    // Butonu devre dışı bırak
+                                    this.disabled = true;
+                                    this.classList.add('opacity-70', 'cursor-not-allowed');
+                                    this.classList.remove('hover:scale-105');
+                                    this.innerHTML = `
+                                        <span class="inline-flex items-center">
+                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Görsel Oluşturuluyor...
+                                        </span>
+                                    `;
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        loadingPrompts.classList.add('hidden');
+                        alert('Promptlar oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                    });
+                });
+                
+                // Görsel oluşturma fonksiyonu
+                function generateImage(prompt, brandInput, aspectRatio) {
+                    // Prompt sonuçlarını gizle yerine görünür bırakıyoruz
+                    // promptResults.classList.add('hidden');
+                    
+                    // Görsel sonuç alanını göster
+                    imageResult.classList.remove('hidden');
+                    
+                    // Prompt ve brand bilgilerini güncelle
+                    const promptElement = document.getElementById('usedPrompt');
+                    const brandElement = document.getElementById('brandInfo');
+                    const aspectRatioElement = document.getElementById('usedAspectRatio');
+                    
+                    if (promptElement) {
+                        promptElement.textContent = prompt;
+                    }
+                    
+                    if (brandElement) {
+                        brandElement.textContent = brandInput;
+                    }
+                    
+                    if (aspectRatioElement) {
+                        aspectRatioElement.textContent = aspectRatio;
+                    }
+                    
+                    // API'ye istek gönder
+                    const formData = new FormData();
+                    formData.append('prompt', prompt);
+                    formData.append('brand_input', brandInput);
+                    formData.append('aspect_ratio', aspectRatio);
+                    formData.append('redirect', 'false');
+                    
+                    fetch('/generate_image', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Görsel oluşturma hatası: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Prompt ID varsa, asenkron işleme için kontrol et
+                        if (data.prompt_id) {
+                            // Alert mesajını kaldırdık
+                            
+                            // Görsel durumunu kontrol et
+                            checkImageStatusAndDisplay(data.prompt_id, prompt, brandInput);
+                        } else if (data.image_urls && data.image_urls.length > 0) {
+                            // Görseller hazırsa, sayfayı yenilemeden görselleri göster
+                            displayImages(data.image_urls, data.prompt || prompt, data.brand || '', data.aspect_ratio || '');
+                            
+                            // Butonu sıfırla
+                            resetCreateButton();
+                        } else if (data.image_url) {
+                            // Tek görsel URL'si varsa
+                            displayImages([data.image_url], prompt, data.brand || '', data.aspect_ratio || '');
+                            
+                            // Butonu sıfırla
+                            resetCreateButton();
+                        } else {
+                            // Hata durumu
+                            imageLoading.classList.add('hidden');
+                            alert('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                            
+                            // Butonu sıfırla
+                            resetCreateButton();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        imageLoading.classList.add('hidden');
+                        alert('Görsel oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                        
+                        // Butonu sıfırla
+                        resetCreateButton();
+                    });
                 }
-            };
-            document.addEventListener('keydown', handleKeyDown);
 
-            // Assemble modal
-            imageContainer.appendChild(modalImage);
-            imageContainer.appendChild(downloadButton);
-            modalContent.appendChild(closeButton);
-            modalContent.appendChild(imageContainer);
-            modalContainer.appendChild(modalContent);
-            document.body.appendChild(modalContainer);
-
-            // Trigger animations
-            requestAnimationFrame(() => {
-                modalContainer.style.opacity = '1';
-                modalContent.classList.remove('scale-95');
-                modalContent.classList.add('scale-100');
-            });
-        }
+                // Görsel oluşturma butonunu sıfırlama fonksiyonu
+                function resetCreateButton() {
+                    const createImageBtn = document.getElementById('createImageBtn');
+                    if (createImageBtn) {
+                        createImageBtn.disabled = false;
+                        // Tüm eski sınıfları kaldır
+                        createImageBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                        
+                        // Gradient sınıflarını ekle (mor-pembe degrade)
+                        if (!createImageBtn.classList.contains('bg-gradient-to-r')) {
+                            createImageBtn.classList.add('bg-gradient-to-r', 'from-purple-600', 'to-pink-600', 'hover:from-purple-700', 'hover:to-pink-700', 'hover:scale-105');
+                        }
+                        
+                        // Metni sıfırla
+                        createImageBtn.innerHTML = 'Görsel Oluştur';
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html> 

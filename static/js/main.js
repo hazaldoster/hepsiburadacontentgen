@@ -1,72 +1,3 @@
-// Global variables
-let currentImageContainer = null;
-
-// Global functions
-function submitImageSelection() {
-    if (!currentImageContainer) {
-        console.warn('⚠️ Görsel seçilmedi!');
-        alert('Lütfen bir görsel seçin');
-        return;
-    }
-
-    const selectedImageUrl = currentImageContainer.getAttribute('data-url');
-    console.log('🖼️ Seçilen görsel:', selectedImageUrl);
-
-    // Generate prompts for the selected image
-    fetch('/generate-prompt', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            text: selectedImageUrl,
-            feature_type: 'image'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            console.error('❌ Prompt oluşturma hatası:', data.error);
-            throw new Error(data.error);
-        }
-
-        // Log prompts to console
-        if (data.prompt_data && data.prompt_data.length > 0) {
-            console.log('\n📝 Seçilen Görsel için Oluşturulan Promptlar:');
-            data.prompt_data.forEach((item, index) => {
-                console.log(`\nPrompt ${index + 1}:`);
-                console.log('Sahne:', item.scene);
-                console.log('Prompt:', item.prompt);
-                console.log('------------------------');
-            });
-        }
-
-        // Close the modal
-        closeModal();
-
-        // Add selected class to the image container
-        document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-        currentImageContainer.classList.add('selected');
-    })
-    .catch(error => {
-        console.error('❌ Prompt oluşturma hatası:', error);
-        alert('Prompt oluşturulurken bir hata oluştu: ' + error.message);
-    });
-}
-
-function showModal(imageUrl) {
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    
-    modalImage.src = imageUrl;
-    modal.classList.remove('hidden');
-}
-
-function closeModal() {
-    const modal = document.getElementById('imageModal');
-    modal.classList.add('hidden');
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const brandForm = document.getElementById('brandForm');
     const generateBtn = document.getElementById('generateBtn');
@@ -128,38 +59,273 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            loadingPrompts.classList.add('hidden');
+            
             if (data.error) {
                 alert('Hata: ' + data.error);
                 return;
             }
             
-            // Hide loading state
-            loadingPrompts.classList.add('hidden');
+            promptResults.classList.remove('hidden');
             
-            // Log function calls if they exist
+            // Promptları ekrana ekle
+            promptContainer.innerHTML = '';
+            
+            // Function call bilgisini göster (debug için)
             if (data.function_calls && data.function_calls.length > 0) {
                 console.log('Function calls:', data.function_calls);
             }
             
-            // Log prompts to console
+            // Promptları ekle - Her zaman tam 4 prompt göster
             if (data.prompt_data && data.prompt_data.length > 0) {
-                console.log('\n📝 Generated Prompts:');
-                data.prompt_data.forEach((item, index) => {
-                    console.log(`\nPrompt ${index + 1}:`);
-                    console.log('Style:', item.style);
-                    console.log('Prompt:', item.prompt);
-                    console.log('------------------------');
+                // Maksimum 4 prompt göster
+                const promptDataToShow = data.prompt_data.slice(0, 4);
+                
+                // Eğer 4'ten az prompt varsa, eksik olanları boş prompt ile doldur
+                while (promptDataToShow.length < 4) {
+                    promptDataToShow.push({
+                        style: "Belirlenmedi",
+                        prompt: "Bu prompt için içerik oluşturulamadı."
+                    });
+                }
+                
+                // 4 promptu göster
+                promptDataToShow.forEach((promptItem, index) => {
+                    const promptCard = document.createElement('div');
+                    promptCard.className = 'prompt-card bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
+                    
+                    // Prompt ID'si oluştur
+                    const promptId = `prompt-${index}`;
+                    const textareaId = `textarea-${index}`;
+                    
+                    // Prompt kartı içeriği
+                    promptCard.innerHTML = `
+                        <div class="mb-2">
+                            <h3 class="font-medium text-purple-300">Stil: ${promptItem.style}</h3>
+                        </div>
+                        <div class="prompt-content" id="${promptId}">
+                            <p class="text-gray-300">${promptItem.prompt}</p>
+                        </div>
+                        <div class="flex justify-center mt-3">
+                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors" data-index="${index}">
+                                Düzenle
+                            </button>
+                        </div>
+                        <div class="prompt-edit hidden" id="${textareaId}">
+                            <textarea class="w-full bg-gray-800 text-gray-300 p-2 rounded mb-2" rows="5">${promptItem.prompt}</textarea>
+                            <div class="flex justify-end space-x-2">
+                                <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    İptal
+                                </button>
+                                <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    promptContainer.appendChild(promptCard);
+                    
+                    // Boş promptlar için tıklama olayı ekleme
+                    if (index < data.prompt_data.length) {
+                        // Prompt kartına tıklama olayı ekle
+                        const promptContent = promptCard.querySelector(`#${promptId}`);
+                        promptContent.addEventListener('click', function() {
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Şimdilik sadece seçim yapılsın, video oluşturma işlemi yapılmasın
+                        });
+                        
+                        // Düzenle butonuna tıklama olayı ekle
+                        const editBtn = promptCard.querySelector('.edit-btn');
+                        editBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Düzenleme modunu aç
+                            const promptContent = document.getElementById(promptId);
+                            const promptEdit = document.getElementById(textareaId);
+                            
+                            promptContent.classList.add('hidden');
+                            promptEdit.classList.remove('hidden');
+                        });
+                        
+                        // İptal butonuna tıklama olayı ekle
+                        const cancelBtn = promptCard.querySelector('.cancel-btn');
+                        cancelBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Düzenleme modunu kapat
+                            const promptContent = document.getElementById(promptId);
+                            const promptEdit = document.getElementById(textareaId);
+                            
+                            promptContent.classList.remove('hidden');
+                            promptEdit.classList.add('hidden');
+                            
+                            // Textarea içeriğini orijinal prompt ile değiştir
+                            const textarea = promptEdit.querySelector('textarea');
+                            textarea.value = promptItem.prompt;
+                        });
+                        
+                        // Kaydet butonuna tıklama olayı ekle
+                        const saveBtn = promptCard.querySelector('.save-btn');
+                        saveBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Yeni prompt değerini al
+                            const textarea = document.querySelector(`#${textareaId} textarea`);
+                            const newPrompt = textarea.value.trim();
+                            
+                            if (newPrompt) {
+                                // Prompt değerini güncelle
+                                promptItem.prompt = newPrompt;
+                                
+                                // Görünümü güncelle
+                                const promptContent = document.getElementById(promptId);
+                                promptContent.querySelector('p').textContent = newPrompt;
+                                
+                                // Düzenleme modunu kapat
+                                promptContent.classList.remove('hidden');
+                                document.getElementById(textareaId).classList.add('hidden');
+                            }
+                        });
+                    } else {
+                        promptCard.classList.add('opacity-50');
+                    }
                 });
             } else if (data.prompts && data.prompts.length > 0) {
-                console.log('\n📝 Generated Prompts:');
-                data.prompts.forEach((prompt, index) => {
-                    console.log(`\nPrompt ${index + 1}:`);
-                    console.log(prompt);
-                    console.log('------------------------');
+                // Eski format için destek - maksimum 4 prompt göster
+                const promptsToShow = data.prompts.slice(0, 4);
+                
+                // Eğer 4'ten az prompt varsa, eksik olanları boş prompt ile doldur
+                while (promptsToShow.length < 4) {
+                    promptsToShow.push("Bu prompt için içerik oluşturulamadı.");
+                }
+                
+                promptsToShow.forEach((prompt, index) => {
+                    const promptCard = document.createElement('div');
+                    promptCard.className = 'prompt-card bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors';
+                    
+                    // Prompt ID'si oluştur
+                    const promptId = `prompt-${index}`;
+                    const textareaId = `textarea-${index}`;
+                    
+                    // Prompt kartı içeriği
+                    promptCard.innerHTML = `
+                        <div class="mb-2">
+                            <h3 class="font-medium text-purple-300">Prompt ${index + 1}</h3>
+                        </div>
+                        <div class="prompt-content" id="${promptId}">
+                            <p class="text-gray-300">${prompt}</p>
+                        </div>
+                        <div class="flex justify-center mt-3">
+                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition-colors" data-index="${index}">
+                                Düzenle
+                            </button>
+                        </div>
+                        <div class="prompt-edit hidden" id="${textareaId}">
+                            <textarea class="w-full bg-gray-800 text-gray-300 p-2 rounded mb-2" rows="5">${prompt}</textarea>
+                            <div class="flex justify-end space-x-2">
+                                <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    İptal
+                                </button>
+                                <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    promptContainer.appendChild(promptCard);
+                    
+                    // Boş promptlar için tıklama olayı ekleme
+                    if (index < data.prompts.length) {
+                        // Prompt kartına tıklama olayı ekle
+                        const promptContent = promptCard.querySelector(`#${promptId}`);
+                        promptContent.addEventListener('click', function() {
+                            // Kartı seçili olarak işaretle
+                            selectPromptCard(promptCard);
+                            
+                            // Seçilen aspect ratio değerini al
+                            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                            // Şimdilik sadece seçim yapılsın, video oluşturma işlemi yapılmasın
+                        });
+                        
+                        // Düzenle butonuna tıklama olayı ekle
+                        const editBtn = promptCard.querySelector('.edit-btn');
+                        editBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Düzenleme modunu aç
+                            const promptContent = document.getElementById(promptId);
+                            const promptEdit = document.getElementById(textareaId);
+                            
+                            promptContent.classList.add('hidden');
+                            promptEdit.classList.remove('hidden');
+                        });
+                        
+                        // İptal butonuna tıklama olayı ekle
+                        const cancelBtn = promptCard.querySelector('.cancel-btn');
+                        cancelBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Düzenleme modunu kapat
+                            const promptContent = document.getElementById(promptId);
+                            const promptEdit = document.getElementById(textareaId);
+                            
+                            promptContent.classList.remove('hidden');
+                            promptEdit.classList.add('hidden');
+                            
+                            // Textarea içeriğini orijinal prompt ile değiştir
+                            const textarea = promptEdit.querySelector('textarea');
+                            textarea.value = promptsToShow[index];
+                        });
+                        
+                        // Kaydet butonuna tıklama olayı ekle
+                        const saveBtn = promptCard.querySelector('.save-btn');
+                        saveBtn.addEventListener('click', function(e) {
+                            e.stopPropagation(); // Kartın tıklama olayını engelle
+                            
+                            // Yeni prompt değerini al
+                            const textarea = document.querySelector(`#${textareaId} textarea`);
+                            const newPrompt = textarea.value.trim();
+                            
+                            if (newPrompt) {
+                                // Prompt değerini güncelle
+                                promptsToShow[index] = newPrompt;
+                                
+                                // Görünümü güncelle
+                                const promptContent = document.getElementById(promptId);
+                                promptContent.querySelector('p').textContent = newPrompt;
+                                
+                                // Düzenleme modunu kapat
+                                promptContent.classList.remove('hidden');
+                                document.getElementById(textareaId).classList.add('hidden');
+                            }
+                        });
+                    } else {
+                        promptCard.classList.add('opacity-50');
+                    }
                 });
             } else {
-                console.log('No prompts were generated');
+                const noPromptMsg = document.createElement('div');
+                noPromptMsg.className = 'bg-red-800 p-4 rounded-lg mt-3';
+                noPromptMsg.innerHTML = `
+                    <h3 class="font-medium text-white mb-2">Hata</h3>
+                    <p class="text-gray-200">Prompt oluşturulamadı. Lütfen tekrar deneyin.</p>
+                `;
+                promptContainer.appendChild(noPromptMsg);
+                
+                // Form'u tekrar göster
+                setTimeout(() => {
+                    promptResults.classList.add('hidden');
+                }, 3000);
             }
+            
+            // Aspect ratio seçimini güncelle
+            updateSelectedAspectRatio();
         })
         .catch(error => {
             loadingPrompts.classList.add('hidden');
@@ -168,158 +334,89 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    function generateVideo(prompt, brandInput) {
-        // Seçilen prompt ile video oluştur
-        promptResults.classList.add('hidden'); // Prompt sonuçlarını gizle
-        videoLoading.classList.remove('hidden');
+    function createVideo(prompt, brandInput) {
+        // Seçilen aspect ratio ve süreyi al
+        const selectedAspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+        const selectedDuration = document.getElementById('videoDuration').value;
         
+        // Video yükleme ekranını göster
+        document.getElementById('promptResults').classList.add('hidden');
+        document.getElementById('videoLoading').classList.remove('hidden');
+
+        // Form verilerini oluştur
         const formData = new FormData();
         formData.append('prompt', prompt);
         formData.append('brand_input', brandInput);
-        
+        formData.append('aspect_ratio', selectedAspectRatio);
+        formData.append('duration', selectedDuration);
+
+        // Video oluşturma isteği gönder
         fetch('/generate_video', {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            videoLoading.classList.add('hidden');
-            
             if (data.error) {
-                alert('Hata: ' + data.error);
-                promptResults.classList.remove('hidden');
-                return;
+                throw new Error(data.error);
             }
-            
-            // Video oluşturulduğunda video.html sayfasına yönlendir
+            // Video sayfasına yönlendir
             window.location.href = `/video?video_url=${encodeURIComponent(data.video_url)}&prompt=${encodeURIComponent(data.prompt)}&brand=${encodeURIComponent(data.brand_input)}`;
         })
         .catch(error => {
-            videoLoading.classList.add('hidden');
-            promptResults.classList.remove('hidden');
             console.error('Video oluşturma hatası:', error);
-            alert('Bir hata oluştu: ' + error.message);
+            alert('Video oluşturulurken bir hata oluştu: ' + error.message);
+            // Hata durumunda yükleme ekranını gizle ve prompt sonuçlarını tekrar göster
+            document.getElementById('videoLoading').classList.add('hidden');
+            document.getElementById('promptResults').classList.remove('hidden');
         });
     }
     
-    // Sayfada "Oluştur" butonuna tıklandığında seçili prompt ile video oluştur
+    // Aspect ratio seçimi için
+    function updateSelectedAspectRatio() {
+        const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+        const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+        
+        aspectRatioOptions.forEach(option => {
+            const input = option.querySelector('input');
+            if (input.checked) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+        
+        // Her bir radio input için event listener ekle
+        aspectRatioInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                aspectRatioOptions.forEach(option => {
+                    const optionInput = option.querySelector('input');
+                    if (optionInput.checked) {
+                        option.classList.add('selected');
+                    } else {
+                        option.classList.remove('selected');
+                    }
+                });
+            });
+        });
+    }
+    
+    // "Seçili Prompt ile Video Oluştur" butonuna tıklama olayı ekle
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('create-video-btn')) {
+        if (e.target.closest('.create-video-btn')) {
+            e.preventDefault();
+            
             if (!selectedPromptCard) {
                 alert('Lütfen önce bir prompt seçin');
                 return;
             }
             
-            // Seçilen prompt ile video oluştur
+            // Seçilen prompt ve aspect ratio değerlerini al
             const promptContent = selectedPromptCard.querySelector('.prompt-content p');
+            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
             const brandInputValue = document.getElementById('brandInput').value;
             
-            generateVideo(promptContent.textContent, brandInputValue);
+            createVideo(promptContent.textContent, brandInputValue);
         }
     });
-
-    // Form submit event listener'ı
-    const imageForm = document.getElementById('imageForm');
-    if (imageForm) {
-        imageForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const brandInput = document.getElementById('brandInput').value;
-            console.log('🔍 URL girişi:', brandInput);
-            
-            if (!brandInput) {
-                console.warn('⚠️ URL girilmedi!');
-                alert('Lütfen geçerli bir URL girin');
-                return;
-            }
-            
-            try {
-                console.log('🌐 Görsel çekme işlemi başlatılıyor...');
-                imageForm.classList.add('opacity-50', 'pointer-events-none');
-                
-                const images = await fetchImages(brandInput);
-                
-                if (images && images.length > 0) {
-                    console.log(`✅ Başarıyla ${images.length} görsel çekildi:`);
-                    images.forEach((imageUrl, index) => {
-                        console.log(`${index + 1}. Görsel: ${imageUrl}`);
-                    });
-
-                    // Display images in the grid
-                    extractedImagesGrid.innerHTML = '';
-                    extractedImagesContainer.classList.remove('hidden');
-                    
-                    images.forEach((imageUrl, index) => {
-                        const imageContainer = document.createElement('div');
-                        imageContainer.className = 'relative border-2 border-transparent rounded-lg cursor-pointer hover:border-purple-500 transition-all';
-                        imageContainer.setAttribute('data-url', imageUrl);
-                        
-                        const img = document.createElement('img');
-                        img.src = imageUrl;
-                        img.alt = `Extracted image ${index + 1}`;
-                        img.className = 'w-full h-48 object-cover rounded-lg';
-                        
-                        const loadingOverlay = document.createElement('div');
-                        loadingOverlay.className = 'absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center';
-                        loadingOverlay.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>';
-                        imageContainer.appendChild(loadingOverlay);
-                        
-                        img.onload = function() {
-                            loadingOverlay.remove();
-                        };
-                        
-                        img.onerror = function() {
-                            loadingOverlay.innerHTML = '<p class="text-red-400 text-sm">Görsel yüklenemedi</p>';
-                        };
-                        
-                        imageContainer.appendChild(img);
-                        
-                        imageContainer.addEventListener('click', function(e) {
-                            if (e.target.tagName === 'IMG') {
-                                const imageUrl = this.getAttribute('data-url');
-                                currentImageContainer = this;
-                                showModal(imageUrl);
-                                e.stopPropagation();
-                            }
-                        });
-                        
-                        extractedImagesGrid.appendChild(imageContainer);
-                    });
-                } else {
-                    console.warn('⚠️ Hiç görsel bulunamadı');
-                    throw new Error('Görsel bulunamadı');
-                }
-
-            } catch (error) {
-                console.error('❌ İşlem hatası:', {
-                    message: error.message,
-                    timestamp: new Date().toISOString()
-                });
-                alert('Hata: ' + error.message);
-            } finally {
-                imageForm.classList.remove('opacity-50', 'pointer-events-none');
-            }
-        });
-    }
-});
-
-async function fetchImages(url) {
-    try {
-        const imageExtractor = new ImageExtractor();
-        const images = await imageExtractor.extractImagesFromUrl(url);
-        
-        if (!images || images.length === 0) {
-            throw new Error('No images found');
-        }
-        
-        return images; // This now returns product_images directly
-    } catch (error) {
-        console.error('Error fetching images:', error);
-        throw error;
-    }
-} 
+}); 
