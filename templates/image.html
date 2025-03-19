@@ -32,7 +32,6 @@
             transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
         }
-        /* Prompt kartı seçildiğinde pulsating efekti */
         .selected-card {
             animation: pulse-border 2s infinite;
         }
@@ -48,7 +47,6 @@
                 border-color: rgba(139, 92, 246, 0.3);
             }
         }
-        /* Gradient overlay için nefes alma animasyonu */
         .breathing-gradient {
             animation: breathing-gradient 3s ease-in-out infinite;
         }
@@ -64,38 +62,6 @@
                 opacity: 0.3;
             }
         }
-        /* Aspect ratio seçimi için stil */
-        .aspect-ratio-option {
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .aspect-ratio-option.selected {
-            transform: translateY(-3px);
-        }
-        .aspect-ratio-option.selected::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            right: -3px;
-            bottom: -3px;
-            border-radius: 0.5rem;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899);
-            z-index: -1;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% {
-                opacity: 0.6;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0.6;
-            }
-        }
-        /* Görsel galerisi için stil */
         .image-gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -120,7 +86,6 @@
             opacity: 0.9;
         }
         
-        /* Modern yükleme animasyonları */
         .loader-container {
             display: flex;
             flex-direction: column;
@@ -129,7 +94,6 @@
             padding: 2rem;
         }
         
-        /* Prompt yükleme animasyonu */
         .prompt-loader {
             width: 80px;
             height: 80px;
@@ -200,7 +164,6 @@
             }
         }
         
-        /* Görsel yükleme animasyonu */
         .image-loader {
             width: 100px;
             height: 100px;
@@ -239,7 +202,6 @@
             }
         }
         
-        /* Yükleme metni animasyonu */
         .loading-text {
             font-weight: 500;
             background: linear-gradient(90deg, #8b5cf6, #ec4899, #8b5cf6);
@@ -264,7 +226,6 @@
             border-color: #8B5CF6 !important;
             --tw-ring-color: #8B5CF6 !important;
         }
-        /* Add modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -353,12 +314,11 @@
             transform: scale(1.1);
         }
         
-        /* Add zoom cursor for images */
         #extractedImagesGrid img {
             cursor: zoom-in;
         }
     </style>
-    <script src="{{ url_for('static', filename='js/firecrawl.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scrape.do.js') }}"></script>
 </head>
 <body class="text-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -378,21 +338,40 @@
 
         <div class="max-w-6xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
             <div class="p-6">
-                <div id="imageResult" class="mt-8">
-                    <h2 class="text-xl font-semibold mb-4 text-purple-400">Seçilen Görsel</h2>
-                    
-                    <!-- Görsel Galerisi -->
-                    <div class="bg-gray-900 p-4 rounded-lg">
-                        <div class="text-center py-8">
-                            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-purple-500 mb-4"></div>
-                            <p class="text-gray-300">İşlem devam ediyor...</p>
-                        </div>
+                <form id="imageForm" class="mb-6">
+                    <div class="mb-4">
+                        <label for="brandInput" class="block text-gray-300 mb-2 font-medium">URL Girin</label>
+                        <input type="url" id="brandInput" name="brand_input" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="https://example.com" required>
                     </div>
                     
-                    <div class="mt-6 text-center">
-                        <a href="{{ url_for('image') }}" class="inline-block py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                            Yeni Görsel Seç
-                        </a>
+                    <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                        Görselleri Getir
+                    </button>
+                </form>
+
+                <div id="extractedImagesContainer" class="mt-8 hidden">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-400">Çıkarılan Görseller</h3>
+                    <p class="mb-4 text-gray-300">Lütfen bir görsel seçin:</p>
+                    <div id="extractedImagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+                </div>
+
+                <!-- Loading Animation -->
+                <div id="loadingAnimation" class="hidden mt-8">
+                    <div class="flex flex-col items-center justify-center p-8">
+                        <div class="prompt-loader mb-4">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                        <p class="text-lg font-medium text-purple-400">Görseller Yükleniyor...</p>
+                        <p class="text-sm text-gray-400 mt-2">Lütfen bekleyin</p>
                     </div>
                 </div>
             </div>
@@ -403,21 +382,28 @@
         </footer>
     </div>
 
-    <!-- Add modal HTML after the footer -->
-    <div id="imageModal" class="modal" onclick="closeModal(event)">
-        <span class="close-modal" onclick="closeModal(event)">&times;</span>
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <img id="modalImage" src="" alt="Full size image">
-            <div class="modal-actions">
-                <button class="modal-button modal-submit" onclick="submitImageSelection()">Bu Görseli Seç</button>
-                <button class="modal-button modal-cancel" onclick="closeModal(event)">İptal</button>
+    <!-- Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4 relative">
+            <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <div class="mt-4">
+                <img id="modalImage" src="" alt="Selected image" class="max-h-[80vh] mx-auto">
+            </div>
+            <div class="mt-4 flex justify-end space-x-2">
+                <button onclick="closeModal()" class="modal-button modal-cancel">Vazgeç</button>
+                <button onclick="submitImageSelectionAndClose()" class="modal-button modal-submit">Bu Görseli Seç</button>
             </div>
         </div>
     </div>
 
     <script>
+        let currentImageContainer = null;
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Görsellerin yüklenmesini kontrol et
             const images = document.querySelectorAll('.image-gallery img');
             images.forEach(img => {
                 img.addEventListener('error', function() {
@@ -429,230 +415,48 @@
                 });
             });
             
-            // İndirme fonksiyonları kaldırıldı
+            const imageForm = document.getElementById('imageForm');
+            const extractedImagesContainer = document.getElementById('extractedImagesContainer');
+            const extractedImagesGrid = document.getElementById('extractedImagesGrid');
             
-            // URL parametrelerini kontrol et
-            const urlParams = new URLSearchParams(window.location.search);
-            const promptId = urlParams.get('prompt_id');
-            const imageUrl = urlParams.get('image_url');
-            const imageUrls = urlParams.getAll('image_url');
-            
-            // Görselleri görüntülemek için fonksiyon
-            function displayImages(imageUrls) {
-                // Yükleme animasyonunu gizle
-                const loaderContainer = document.querySelector('#imageResult .text-center.py-8');
-                if (loaderContainer) {
-                    loaderContainer.classList.add('hidden');
+            imageForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const brandInput = document.getElementById('brandInput').value;
+                if (!brandInput) {
+                    alert('Lütfen geçerli bir URL girin');
+                    return;
                 }
-                
-                // Görsel galerisini tekrar seç (oluşturulmuş olabilir)
-                const gallery = document.querySelector('.image-gallery');
-                if (gallery) {
-                    // Görselleri ekle
-                    gallery.innerHTML = '';
-                    imageUrls.forEach((url, index) => {
-                        const imageItem = document.createElement('div');
-                        imageItem.className = 'image-item';
-                        imageItem.innerHTML = `
-                            <a href="${url}" target="_blank" class="block">
-                                <img src="${url}" alt="Oluşturulan Görsel ${index + 1}" class="rounded-lg shadow-lg hover:opacity-90 transition-opacity cursor-zoom-in" title="Tam boyutta görmek için tıklayın">
-                            </a>
-                            <div class="mt-2 flex justify-center">
-                                <a href="${url}" target="_blank" class="text-sm py-2 px-4 bg-blue-600 text-white font-medium rounded-lg transition duration-300 flex items-center hover:bg-blue-700">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                    </svg>
-                                    Görseli Aç ve Kaydet
-                                </a>
-                            </div>
-                        `;
-                        gallery.appendChild(imageItem);
-                    });
-                }
-            }
-            
-            // Görsel durumunu kontrol eden ve gösteren fonksiyon
-            function checkImageStatusAndDisplay(promptId) {
-                // Görsel sonuç alanını göster
-                const imageResult = document.getElementById('imageResult');
-                if (imageResult) {
-                    imageResult.classList.remove('hidden');
-                }
-                
-                // Seçilen aspect ratio değerini al
-                const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
-                
-                // Durum kontrolü için fonksiyon
-                function checkStatus() {
-                    fetch(`/check_image_status/${promptId}?aspect_ratio=${aspectRatio}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.is_ready && data.image_urls && data.image_urls.length > 0) {
-                                // Görseller hazırsa, sayfayı yenilemeden görselleri göster
-                                displayImages(data.image_urls);
-                                
-                                // Kontrol döngüsünü durdur
-                                clearInterval(statusInterval);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Durum kontrolü hatası:', error);
-                        });
-                }
-                
-                // İlk kontrolü hemen yap
-                checkStatus();
-                
-                // 5 saniyede bir kontrol et
-                const statusInterval = setInterval(checkStatus, 5000);
-                
-                // 60 saniye sonra kontrolü durdur
-                setTimeout(() => {
-                    clearInterval(statusInterval);
-                }, 60000);
-            }
-            
-            // Eğer prompt_id varsa ve görseller yoksa, durumu periyodik olarak kontrol et
-            if (promptId && (!imageUrls || imageUrls.length === 0)) {
-                checkImageStatusAndDisplay(promptId);
-            }
-            
-            // Eğer image_url parametresi yoksa, form sayfasını göster
-            if (!imageUrl && !promptId) {
-                // Form sayfası HTML'ini oluştur
-                document.querySelector('.container').innerHTML = `
-                    <div class="flex items-center mb-6">
-                        <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Ana Sayfa
-                        </a>
-                    </div>
 
-                    <header class="mb-12 text-center">
-                        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Görsel Üretici</h1>
-                        <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli görseller oluşturun. İşte sizin için oluşturduğumuz görseller!</p>
-                    </header>
+                // Store the input value in session storage
+                sessionStorage.setItem('lastBrandInput', brandInput);
+                
+                // Refresh the page
+                window.location.reload();
+                return;
+            });
 
-                    <div class="max-w-3xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
-                        <div class="p-6">
-                            <form id="imageForm" class="mb-6">
-                                <div class="mb-4">
-                                    <label for="brandInput" class="block text-gray-300 mb-2 font-medium">URL Girin</label>
-                                    <input type="url" id="brandInput" name="brand_input" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="https://example.com" required>
-                                </div>
-                                
-                                <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                                    Görselleri Getir
-                                </button>
-                            </form>
-
-                            <!-- Add extracted images container -->
-                            <div id="extractedImagesContainer" class="mt-8 hidden">
-                                <h3 class="text-xl font-semibold mb-4 text-purple-400">Çıkarılan Görseller</h3>
-                                <p class="mb-4 text-gray-300">Lütfen bir görsel seçin:</p>
-                                <div id="extractedImagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <!-- Images will be dynamically added here -->
-                                </div>
-                            </div>
-
-                            <!-- Görsel Boyutu seçimi -->
-                            <div class="mt-6 mb-4">
-                                <label class="block text-gray-300 mb-2 font-medium">Görsel Boyutu</label>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors selected">
-                                        <input type="radio" name="aspectRatio" value="1:1" class="sr-only aspect-ratio-input" checked>
-                                        <div class="w-14 h-14 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
-                                            <div class="w-12 h-12 bg-gray-300 rounded-sm"></div>
-                                        </div>
-                                        <span class="text-gray-300 font-medium">1:1</span>
-                                        <span class="text-gray-400 text-xs mt-1">Kare (Instagram, Facebook)</span>
-                                    </label>
-                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
-                                        <input type="radio" name="aspectRatio" value="4:5" class="sr-only aspect-ratio-input">
-                                        <div class="w-12 h-15 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
-                                            <div class="w-10 h-12 bg-gray-300 rounded-sm"></div>
-                                        </div>
-                                        <span class="text-gray-300 font-medium">4:5</span>
-                                        <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Post)</span>
-                                    </label>
-                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
-                                        <input type="radio" name="aspectRatio" value="16:9" class="sr-only aspect-ratio-input">
-                                        <div class="w-16 h-9 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
-                                            <div class="w-14 h-7 bg-gray-300 rounded-sm"></div>
-                                        </div>
-                                        <span class="text-gray-300 font-medium">16:9</span>
-                                        <span class="text-gray-400 text-xs mt-1">Yatay (Web, LinkedIn)</span>
-                                    </label>
-                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
-                                        <input type="radio" name="aspectRatio" value="9:16" class="sr-only aspect-ratio-input">
-                                        <div class="w-12 h-16 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
-                                            <div class="w-8 h-14 bg-gray-300 rounded-sm"></div>
-                                        </div>
-                                        <span class="text-gray-300 font-medium">9:16</span>
-                                        <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Stories)</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            // Check for stored input value when page loads
+            (async function() {
+                const lastBrandInput = sessionStorage.getItem('lastBrandInput');
+                if (lastBrandInput) {
+                    // Clear the stored value
+                    sessionStorage.removeItem('lastBrandInput');
                     
-                    <footer class="mt-12 text-center text-gray-500 text-sm">
-                        <p>© 2025 Hızlı Görsel Üretici | AI Destekli Görsel Üretim Aracı</p>
-                    </footer>
-                `;
-
-                // Form ve diğer elementleri seç
-                const imageForm = document.getElementById('imageForm');
-                const extractedImagesContainer = document.getElementById('extractedImagesContainer');
-                const extractedImagesGrid = document.getElementById('extractedImagesGrid');
-                
-                // Seçilen aspect ratio için
-                const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
-                const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
-                
-                // Sayfa yüklendiğinde varsayılan seçimi işaretle
-                updateSelectedAspectRatio();
-                
-                // Her bir radio input için event listener ekle
-                aspectRatioInputs.forEach(input => {
-                    input.addEventListener('change', updateSelectedAspectRatio);
-                });
-                
-                // Seçilen aspect ratio'yu güncelle
-                function updateSelectedAspectRatio() {
-                    aspectRatioOptions.forEach(option => {
-                        const input = option.querySelector('input');
-                        if (input.checked) {
-                            option.classList.add('selected');
-                        } else {
-                            option.classList.remove('selected');
-                        }
-                    });
-                }
-                
-                // Form gönderildiğinde
-                imageForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const brandInput = document.getElementById('brandInput').value;
-                    if (!brandInput) {
-                        alert('Lütfen geçerli bir URL girin');
-                        return;
-                    }
+                    // Set the input value
+                    document.getElementById('brandInput').value = lastBrandInput;
                     
                     try {
-                        // Show loading state
+                        // Show loading animation
+                        document.getElementById('loadingAnimation').classList.remove('hidden');
                         imageForm.classList.add('opacity-50', 'pointer-events-none');
                         
-                        // Extract images from URL
                         const extractResponse = await fetch('/extract-images', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ url: brandInput })
+                            body: JSON.stringify({ url: lastBrandInput })
                         });
 
                         const extractData = await extractResponse.json();
@@ -661,14 +465,14 @@
                             throw new Error(extractData.error);
                         }
 
-                        // Clear previous images and reset selection
                         extractedImagesGrid.innerHTML = '';
 
-                        // Display extracted images
-                        if (extractData.images && extractData.images.length > 0) {
+                        if (extractData.product_images && extractData.product_images.length > 0) {
+                            // Hide loading animation
+                            document.getElementById('loadingAnimation').classList.add('hidden');
                             extractedImagesContainer.classList.remove('hidden');
                             
-                            extractData.images.forEach((imageUrl, index) => {
+                            extractData.product_images.forEach((imageUrl, index) => {
                                 const imageContainer = document.createElement('div');
                                 imageContainer.className = 'relative border-2 border-transparent rounded-lg cursor-pointer hover:border-purple-500 transition-all';
                                 imageContainer.setAttribute('data-url', imageUrl);
@@ -678,27 +482,22 @@
                                 img.alt = `Extracted image ${index + 1}`;
                                 img.className = 'w-full h-48 object-cover rounded-lg';
                                 
-                                // Add loading indicator
                                 const loadingOverlay = document.createElement('div');
                                 loadingOverlay.className = 'absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center';
                                 loadingOverlay.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>';
                                 imageContainer.appendChild(loadingOverlay);
                                 
-                                // Handle image load
                                 img.onload = function() {
                                     loadingOverlay.remove();
                                 };
                                 
-                                // Handle image error
                                 img.onerror = function() {
                                     loadingOverlay.innerHTML = '<p class="text-red-400 text-sm">Görsel yüklenemedi</p>';
                                 };
                                 
                                 imageContainer.appendChild(img);
                                 
-                                // Add click handler for selection
                                 imageContainer.addEventListener('click', function(e) {
-                                    // If the click was directly on the image, show the modal
                                     if (e.target.tagName === 'IMG') {
                                         const imageUrl = this.getAttribute('data-url');
                                         currentImageContainer = this;
@@ -713,133 +512,299 @@
                             throw new Error('Görsel bulunamadı');
                         }
                     } catch (error) {
+                        // Hide loading animation on error
+                        document.getElementById('loadingAnimation').classList.add('hidden');
                         alert('Hata: ' + error.message);
                     } finally {
-                        // Reset loading state
                         imageForm.classList.remove('opacity-50', 'pointer-events-none');
                     }
-                });
-            }
+                }
+            })();
         });
 
-        let currentImageContainer = null;
-
-        // Function to handle image selection and prompt generation
-        async function submitImageSelection() {
-            if (currentImageContainer) {
-                const container = currentImageContainer;
-                const selectedImageUrl = container.getAttribute('data-url');
-                
-                // Close modal first
-                const modal = document.getElementById('imageModal');
-                modal.style.display = 'none';
-                currentImageContainer = null;
-
-                try {
-                    // Get selected aspect ratio and brand input
-                    const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
-                    const brandInput = document.getElementById('brandInput').value;
-                    
-                    // Prepare request payload
-                    const payload = {
-                        text: brandInput,
-                        feature_type: 'image',
-                        aspect_ratio: aspectRatio,
-                        extracted_image_url: selectedImageUrl
-                    };
-                    
-                    // Log API request
-                    console.log('🚀 API Request:', {
-                        endpoint: '/generate-prompt',
-                        method: 'POST',
-                        payload: payload
-                    });
-                    
-                    // Generate prompts with the selected image
-                    const response = await fetch('/generate-prompt', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Prompt oluşturma hatası');
-                    }
-
-                    const data = await response.json();
-                    
-                    // Log API response with detailed prompt information
-                    console.log('✅ API Response:', {
-                        status: response.status,
-                        data: data
-                    });
-
-                    // Log each prompt in a formatted way
-                    console.log('\n📝 Generated Prompts:');
-                    data.prompt_data.forEach((item, index) => {
-                        console.log(`\nPrompt ${index + 1}:`);
-                        console.log('Style:', item.style);
-                        console.log('Prompt:', item.prompt);
-                        console.log('------------------------');
-                    });
-
-                    // Update visual selection for the image
-                    document.querySelectorAll('#extractedImagesGrid > div').forEach(div => {
-                        div.classList.remove('border-purple-500', 'ring-2', 'ring-purple-500');
-                        div.classList.add('border-transparent');
-                    });
-                    
-                    container.classList.remove('border-transparent');
-                    container.classList.add('border-purple-500', 'ring-2', 'ring-purple-500');
-                    
-                    // Store selected image URL globally
-                    window.extractedImageUrl = selectedImageUrl;
-                    
-                } catch (error) {
-                    console.error('❌ API Error:', {
-                        message: error.message,
-                        timestamp: new Date().toISOString()
-                    });
-                    alert('Promptlar oluşturulurken bir hata oluştu: ' + error.message);
-                }
-            }
-        }
-
-        // Modal functions
         function showModal(imageUrl) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
-            
-            modalImg.style.opacity = '0';
-            modal.style.display = 'block';
-            
             modalImg.src = imageUrl;
-            modalImg.onload = function() {
-                modalImg.style.opacity = '1';
-                modalImg.style.transition = 'opacity 0.3s ease';
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+        }
+
+        async function checkGenerationStatus(requestId) {
+            if (!requestId) return null;
+            
+            try {
+                const response = await fetch(`/check_status/${requestId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Status check response:', data);
+                return data;
+            } catch (error) {
+                console.error('Status check error:', error);
+                return null;
+            }
+        }
+
+        async function submitImageSelectionAndClose() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+            await submitImageSelection();
+        }
+
+        async function submitImageSelection() {
+            if (!currentImageContainer) {
+                console.warn('⚠️ Görsel seçilmedi!');
+                alert('Lütfen bir görsel seçin');
+                return;
+            }
+
+            const selectedImageUrl = currentImageContainer.getAttribute('data-url');
+            console.log('🖼️ Seçilen görsel:', selectedImageUrl);
+
+            // Create a container for generated images if it doesn't exist
+            let generatedImagesContainer = document.getElementById('generatedImagesContainer');
+            if (!generatedImagesContainer) {
+                generatedImagesContainer = document.createElement('div');
+                generatedImagesContainer.id = 'generatedImagesContainer';
+                generatedImagesContainer.className = 'mt-8';
+                generatedImagesContainer.innerHTML = `
+                    <h3 class="text-xl font-semibold mb-4 text-purple-400">Üretilen Görseller</h3>
+                    <div id="generatedImagesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4"></div>
+                `;
+                
+                // Add the container after extractedImagesContainer
+                const extractedImagesContainer = document.getElementById('extractedImagesContainer');
+                extractedImagesContainer.parentNode.insertBefore(generatedImagesContainer, extractedImagesContainer.nextSibling);
+            }
+
+            const generatedImagesGrid = document.getElementById('generatedImagesGrid');
+            generatedImagesGrid.innerHTML = ''; // Clear previous images
+
+            try {
+                // Add loading indicator for prompt generation
+                const loadingPrompt = document.createElement('div');
+                loadingPrompt.className = 'col-span-2 text-center p-4';
+                loadingPrompt.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                        <p class="text-gray-400 text-sm mt-4">Promptlar oluşturuluyor...</p>
+                    </div>
+                `;
+                generatedImagesGrid.appendChild(loadingPrompt);
+
+                // Generate prompts for the selected image - NOW this happens only after image selection
+                const promptResponse = await fetch('/generate-prompt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: selectedImageUrl,
+                        feature_type: 'image'
+                    })
+                });
+
+                const promptData = await promptResponse.json();
+                if (promptData.error) {
+                    throw new Error(promptData.error);
+                }
+
+                // Remove loading indicator
+                loadingPrompt.remove();
+
+                // Log prompts to console
+                if (promptData.prompt_data && promptData.prompt_data.length > 0) {
+                    console.log('\n📝 Seçilen Görsel için Oluşturulan Promptlar:');
+                    
+                    // Create loading placeholders for all images
+                    const loadingContainers = promptData.prompt_data.map((_, index) => {
+                        const loadingContainer = document.createElement('div');
+                        loadingContainer.className = 'relative border-2 border-transparent rounded-lg min-h-[300px] bg-gray-800 flex items-center justify-center';
+                        loadingContainer.innerHTML = `
+                            <div class="flex flex-col items-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                                <p class="text-gray-400 text-sm mt-4">Görsel ${index + 1} üretiliyor...</p>
+                                <p class="text-gray-500 text-xs mt-2 status-text">Başlatılıyor...</p>
+                            </div>
+                        `;
+                        generatedImagesGrid.appendChild(loadingContainer);
+                        return loadingContainer;
+                    });
+                    
+                    try {
+                        // Generate all images at once
+                        const response = await fetch('/generate_image', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                prompt_data: promptData.prompt_data,
+                                image_url: selectedImageUrl
+                            })
+                        });
+                        
+                        const imageData = await response.json();
+                        
+                        if (imageData.error) {
+                            throw new Error(imageData.error);
+                        }
+
+                        console.log('✅ Fal.ai\'den yanıt alındı:', imageData);
+
+                        if (imageData.generated_images && imageData.generated_images.length > 0) {
+                            imageData.generated_images.forEach((genImage, index) => {
+                                const loadingContainer = loadingContainers[index];
+                                
+                                // Create image container
+                                const imageContainer = document.createElement('div');
+                                imageContainer.className = 'relative border-2 border-transparent rounded-lg overflow-hidden cursor-pointer bg-gray-800';
+                                
+                                const img = document.createElement('img');
+                                img.src = genImage.image_url;
+                                img.alt = `Generated image ${index + 1}`;
+                                img.className = 'w-full h-[300px] object-cover rounded-lg';
+                                
+                                // Add click event to container
+                                imageContainer.addEventListener('click', () => {
+                                    showImageModal(genImage.image_url, index + 1);
+                                });
+
+                                imageContainer.appendChild(img);
+                                
+                                // Replace loading placeholder with actual image container
+                                loadingContainer.replaceWith(imageContainer);
+                            });
+                        }
+
+                    } catch (error) {
+                        console.error('❌ Görsel üretme hatası:', error);
+                        loadingContainers.forEach(container => {
+                            container.innerHTML = `
+                                <div class="text-red-400 text-center p-4">
+                                    <p class="font-semibold mb-2">Görsel üretilemedi</p>
+                                    <p class="text-sm">${error.message}</p>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+
+                // Close the modal
+                closeModal();
+
+                // Add selected class to the image container
+                document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                currentImageContainer.classList.add('selected');
+
+            } catch (error) {
+                console.error('❌ Prompt oluşturma hatası:', error);
+                alert('Prompt oluşturulurken bir hata oluştu: ' + error.message);
+            }
+        }
+
+        // Make functions globally available
+        window.showModal = showModal;
+        window.closeModal = closeModal;
+        window.submitImageSelection = submitImageSelection;
+
+        function showImageModal(imageUrl, imageIndex) {
+            // Create modal container
+            const modalContainer = document.createElement('div');
+            modalContainer.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-90 transition-opacity duration-300';
+            modalContainer.style.opacity = '0';
+
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.className = 'relative max-w-4xl w-full bg-gray-900 rounded-lg shadow-xl transform transition-transform duration-300 scale-95';
+            
+            // Create close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'absolute top-4 right-4 text-gray-400 hover:text-white z-50 p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors duration-200';
+            closeButton.innerHTML = `
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            `;
+            closeButton.onclick = () => {
+                modalContainer.style.opacity = '0';
+                modalContent.classList.remove('scale-100');
+                modalContent.classList.add('scale-95');
+                setTimeout(() => modalContainer.remove(), 300);
             };
-        }
 
-        function closeModal(event) {
-            if (event.target.className === 'modal' || 
-                event.target.className === 'close-modal' || 
-                event.target.className === 'modal-button modal-cancel') {
-                const modal = document.getElementById('imageModal');
-                modal.style.display = 'none';
-                currentImageContainer = null;
-            }
-        }
+            // Create image container
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'p-4';
+            
+            const modalImage = document.createElement('img');
+            modalImage.src = imageUrl;
+            modalImage.alt = `Generated image ${imageIndex}`;
+            modalImage.className = 'w-full max-h-[70vh] object-contain rounded-lg';
 
-        // Close modal with escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const modal = document.getElementById('imageModal');
-                modal.style.display = 'none';
-                currentImageContainer = null;
-            }
-        });
+            // Create download button
+            const downloadButton = document.createElement('button');
+            downloadButton.className = 'mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105';
+            downloadButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Görseli İndir</span>
+            `;
+            
+            downloadButton.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `generated-image-${imageIndex}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    console.log('✅ Görsel başarıyla indirildi');
+                } catch (error) {
+                    console.error('❌ Görsel indirme hatası:', error);
+                    alert('Görsel indirilirken bir hata oluştu');
+                }
+            };
+
+            // Add keyboard event listener for closing modal with Escape key
+            const handleKeyDown = (e) => {
+                if (e.key === 'Escape') {
+                    closeButton.click();
+                    document.removeEventListener('keydown', handleKeyDown);
+                }
+            };
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Assemble modal
+            imageContainer.appendChild(modalImage);
+            imageContainer.appendChild(downloadButton);
+            modalContent.appendChild(closeButton);
+            modalContent.appendChild(imageContainer);
+            modalContainer.appendChild(modalContent);
+            document.body.appendChild(modalContainer);
+
+            // Trigger animations
+            requestAnimationFrame(() => {
+                modalContainer.style.opacity = '1';
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            });
+        }
     </script>
 </body>
 </html> 
