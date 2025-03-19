@@ -391,6 +391,7 @@ def generate_video():
     prompt = request.form.get('prompt')
     brand_input = request.form.get('brand_input')
     aspect_ratio = request.form.get('aspect_ratio', '9:16')  # Varsayılan olarak 9:16
+    duration = request.form.get('duration', '5s')  # Yeni: Video süresi parametresi
     
     if not prompt:
         return jsonify({"error": "Geçersiz prompt seçimi"}), 400
@@ -402,8 +403,9 @@ def generate_video():
     
     try:
         logger.info(f"Fal.ai API'sine video oluşturma isteği gönderiliyor")
-        logger.info(f"Kullanılan prompt: {prompt[:50]}...")  # İlk 50 karakteri logla
+        logger.info(f"Kullanılan prompt: {prompt[:50]}...")
         logger.info(f"Kullanılan aspect ratio: {aspect_ratio}")
+        logger.info(f"Kullanılan video süresi: {duration}")
         
         # Fal.ai Veo2 API'si ile video oluştur
         try:
@@ -426,7 +428,7 @@ def generate_video():
             arguments = {
                 "prompt": prompt,
                 "aspect_ratio": aspect_ratio,  # Kullanıcının seçtiği aspect ratio
-                "duration": "5s"  # Maksimum süre (5 saniye)
+                "duration": duration  # Kullanıcının seçtiği süre
             }
             
             # Parametreleri logla
@@ -498,7 +500,7 @@ def generate_video():
                     "input": {
                         "prompt": prompt,
                         "aspect_ratio": aspect_ratio,  # Kullanıcının seçtiği aspect ratio
-                        "duration": "5s"  # Maksimum süre (5 saniye)
+                        "duration": duration  # Kullanıcının seçtiği süre
                     }
                 }
                 
@@ -949,17 +951,6 @@ def check_image_status(prompt_id):
         logger.error(f"Durum kontrolü hatası: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-# Add error handlers
-@app.errorhandler(404)
-def page_not_found(e):
-    logger.error(f"404 error: {str(e)}")
-    return render_template('error.html', error="Page not found"), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    logger.error(f"500 error: {str(e)}")
-    return render_template('error.html', error="Internal server error"), 500
-
 @app.route('/debug')
 def debug():
     """Debug endpoint to check environment variables and configuration"""
@@ -975,7 +966,18 @@ def debug():
     }
     return jsonify(debug_info)
 
+# Add error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    logger.error(f"404 error: {str(e)}")
+    return render_template('error.html', error="Page not found"), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    logger.error(f"500 error: {str(e)}")
+    return render_template('error.html', error="Internal server error"), 500
+
 if __name__ == '__main__':
     logger.info("Uygulama başlatılıyor...")
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=True)

@@ -226,45 +226,64 @@
                     </div>
                     
                     <!-- Prompt Düzenleme Alanı -->
-                    <div class="prompt-editor">
-                        <h3 class="text-lg font-medium text-gray-300 mb-2">Prompt Düzenle ve Yeniden Oluştur:</h3>
-                        <form id="regenerateForm">
-                            <textarea id="editedPrompt" class="w-full bg-gray-700 text-gray-200 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{{ prompt }}</textarea>
+                    <div class="regenerate-container mt-8">
+                        <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-4">Prompt'u Düzenle ve Yeniden Video Oluştur</h2>
+                        
+                        <form id="regenerateForm" class="space-y-4">
+                            <div>
+                                <label for="promptInput" class="block text-gray-300 mb-2 font-medium">Prompt</label>
+                                <textarea id="promptInput" name="prompt" rows="3" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100">{{ prompt }}</textarea>
+                                <input type="hidden" name="brand_input" value="{{ brand }}">
+                            </div>
                             
-                            <div class="mt-6 mb-4">
+                            <div>
                                 <label class="block text-gray-300 mb-2 font-medium text-center">Video Boyutu</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors selected">
-                                        <input type="radio" name="aspectRatio" value="9:16" class="sr-only aspect-ratio-input" checked>
+                                <div class="aspect-ratio-selector grid grid-cols-2 gap-6 max-w-lg mx-auto">
+                                    <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
+                                        <input type="radio" name="aspect_ratio" value="9:16" class="sr-only aspect-ratio-input" checked>
                                         <div class="w-12 h-16 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
                                             <div class="w-8 h-14 bg-gray-300 rounded-sm"></div>
                                         </div>
-                                        <span class="text-gray-300 font-medium">Dikey (9:16)</span>
-                                        <span class="text-gray-400 text-xs mt-1">Instagram Reels, TikTok</span>
+                                        <span class="text-gray-300 font-medium">9:16</span>
+                                        <span class="text-gray-400 text-xs mt-1">Dikey (Instagram Reels, TikTok)</span>
                                     </label>
                                     <label class="aspect-ratio-option flex flex-col items-center bg-gray-700 p-4 rounded-lg border border-gray-600 cursor-pointer hover:bg-gray-600 transition-colors">
-                                        <input type="radio" name="aspectRatio" value="16:9" class="sr-only aspect-ratio-input">
+                                        <input type="radio" name="aspect_ratio" value="16:9" class="sr-only aspect-ratio-input">
                                         <div class="w-16 h-9 bg-gray-500 rounded-sm mb-2 flex items-center justify-center">
                                             <div class="w-14 h-7 bg-gray-300 rounded-sm"></div>
                                         </div>
-                                        <span class="text-gray-300 font-medium">Yatay (16:9)</span>
-                                        <span class="text-gray-400 text-xs mt-1">YouTube, Instagram</span>
+                                        <span class="text-gray-300 font-medium">16:9</span>
+                                        <span class="text-gray-400 text-xs mt-1">Yatay (YouTube, Instagram)</span>
                                     </label>
                                 </div>
                             </div>
                             
-                            <div class="regenerate-btn-container">
-                                <button type="submit" id="regenerateBtn" class="py-3 px-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                                    Tekrar Üret
-                                </button>
+                            <div class="mt-4">
+                                <label class="block text-gray-300 mb-2 font-medium text-center">Video Süresi</label>
+                                <div class="max-w-sm mx-auto">
+                                    <select id="videoDuration" name="duration" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="5s" selected>5 saniye</option>
+                                        <option value="6s">6 saniye</option>
+                                        <option value="7s">7 saniye</option>
+                                        <option value="8s">8 saniye</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="regenerate-btn-container flex justify-center mt-6">
+                                <button type="submit" class="py-3 px-8 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">Tekrar Üret</button>
                             </div>
                         </form>
-                        <div id="regenerateError" class="mt-4 bg-red-900/50 text-red-200 p-3 rounded-lg hidden"></div>
                     </div>
                     
                     <div class="mt-4">
                         <h3 class="text-lg font-medium text-gray-300 mb-2">Kullanılan Prompt:</h3>
                         <p id="usedPrompt" class="text-gray-400 bg-gray-700 p-3 rounded-lg">{{ prompt }}</p>
+                        <div class="flex justify-center mt-3">
+                            <button id="editPromptBtn" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                                Düzenle
+                            </button>
+                        </div>
                     </div>
                     <div class="mt-4">
                         <h3 class="text-lg font-medium text-gray-300 mb-2">Marka Bilgisi:</h3>
@@ -350,13 +369,13 @@
                 e.preventDefault();
                 
                 // Form verilerini al
-                const prompt = editedPrompt.value.trim();
-                const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+                const prompt = document.getElementById('promptInput').value.trim();
+                const aspectRatio = document.querySelector('input[name="aspect_ratio"]:checked').value;
+                const duration = document.getElementById('videoDuration').value;
                 const brand = "{{ brand }}";
                 
                 if (!prompt) {
-                    regenerateError.textContent = "Lütfen geçerli bir prompt girin.";
-                    regenerateError.classList.remove('hidden');
+                    alert("Lütfen geçerli bir prompt girin.");
                     return;
                 }
                 
@@ -364,15 +383,13 @@
                 videoLoading.classList.remove('hidden');
                 video.classList.add('hidden');
                 videoError.classList.add('hidden');
-                regenerateError.classList.add('hidden');
-                regenerateBtn.disabled = true;
-                regenerateBtn.textContent = "Video Oluşturuluyor...";
                 
                 // API isteği için form verilerini hazırla
                 const formData = new FormData();
                 formData.append('prompt', prompt);
                 formData.append('brand_input', brand);
                 formData.append('aspect_ratio', aspectRatio);
+                formData.append('duration', duration);
                 
                 // API isteği gönder
                 fetch('/generate_video', {
@@ -393,18 +410,18 @@
                     const newPrompt = data.prompt;
                     
                     // Video kaynağını güncelle
-                    video.querySelector('source').src = videoUrl;
+                    video.src = videoUrl;
                     video.load(); // Videoyu yeniden yükle
                     
                     // İndirme bağlantısını güncelle
-                    downloadBtn.href = videoUrl;
+                    if (downloadBtn) {
+                        downloadBtn.href = videoUrl;
+                    }
                     
                     // Kullanılan prompt'u güncelle
-                    usedPrompt.textContent = newPrompt;
-                    
-                    // Buton durumunu sıfırla
-                    regenerateBtn.disabled = false;
-                    regenerateBtn.textContent = "Tekrar Üret";
+                    if (usedPrompt) {
+                        usedPrompt.textContent = newPrompt;
+                    }
                     
                     // Video yüklendiğinde yükleme animasyonunu gizle
                     video.onloadeddata = function() {
@@ -415,13 +432,19 @@
                 .catch(error => {
                     // Hata durumunda
                     videoLoading.classList.add('hidden');
-                    videoError.classList.remove('hidden');
-                    regenerateError.textContent = error.message || 'Video oluşturulurken bir hata oluştu.';
-                    regenerateError.classList.remove('hidden');
-                    regenerateBtn.disabled = false;
-                    regenerateBtn.textContent = "Tekrar Üret";
+                    video.classList.remove('hidden');
+                    alert('Video oluşturulurken bir hata oluştu: ' + error.message);
                     console.error('Error:', error);
                 });
+            });
+
+            // Düzenle butonuna tıklandığında düzenleme formunu göster
+            document.getElementById('editPromptBtn').addEventListener('click', function() {
+                const promptText = document.getElementById('usedPrompt').textContent;
+                document.getElementById('promptInput').value = promptText;
+                
+                // Regenerate bölümüne scroll yap
+                document.querySelector('.regenerate-container').scrollIntoView({ behavior: 'smooth' });
             });
         });
     </script>

@@ -354,13 +354,24 @@
                         </div>
                     </div>
                     
-                    <!-- Video oluştur butonu -->
-                    <div class="mt-6">
-                        <button class="create-video-btn w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                            Seçili Prompt ile Video Oluştur
-                        </button>
-                        <p class="text-gray-400 text-sm mt-2 text-center">Önce bir prompt seçin, sonra bu butona tıklayarak video oluşturun</p>
+                    <!-- Video oluştur butonu ve süre seçimi -->
+                    <div class="mt-6 flex items-center gap-4">
+                        <div class="flex-grow">
+                            <button class="create-video-btn w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                                Seçili Prompt ile Video Oluştur
+                            </button>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-gray-300 text-sm mb-1">Video Süresi</label>
+                            <select id="videoDuration" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="5s" selected>5 saniye</option>
+                                <option value="6s">6 saniye</option>
+                                <option value="7s">7 saniye</option>
+                                <option value="8s">8 saniye</option>
+                            </select>
+                        </div>
                     </div>
+                    <p class="text-gray-400 text-sm mt-2 text-center">Önce bir prompt seçin, sonra video süresini belirleyip butona tıklayarak video oluşturun</p>
                 </div>
 
                 <div id="videoLoading" class="hidden text-center py-8">
