@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hızlı Video Oluşturucu</title>
+    <title>Creative Scene Designer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             color: #fff;
+            padding-top: 60px; /* Add padding for fixed tab bar */
         }
         .gradient-text {
             background: linear-gradient(90deg, #ff6b6b, #ffa1a1, #ffc6c6);
@@ -92,6 +94,23 @@
             color: white;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
+        
+        /* Edit button and editing functionality */
+        .edit-btn {
+            transition: all 0.2s ease;
+        }
+        .edit-btn:hover {
+            transform: translateY(-2px);
+        }
+        .prompt-edit textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .prompt-card .prompt-content {
+            position: relative;
+            z-index: 1;
+        }
+        
         @keyframes border-pulse {
             0% {
                 opacity: 0.6;
@@ -274,9 +293,32 @@
                 background-position: 200% center;
             }
         }
+        /* Tab Bar Styles */
+        .tab-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button:hover {
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen">
+    <!-- Tab Bar -->
+    <div class="tab-bar fixed top-0 left-0 w-full z-50 px-4 py-3">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex-1"></div>
+            <a href="/library" class="tab-button flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#ff6b6b] to-[#ffc6c6] hover:opacity-90">
+                <i class="ri-gallery-line text-lg"></i>
+                <span class="font-medium">Library</span>
+            </a>
+        </div>
+    </div>
     <div class="container mx-auto px-4 py-8">
         <div class="flex items-center mb-6">
             <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
@@ -288,16 +330,16 @@
         </div>
 
         <header class="mb-12 text-center">
-            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Video Oluşturucu</h1>
-            <p class="text-gray-400 max-w-2xl mx-auto">Markanız için AI destekli Instagram videoları oluşturun. Marka bilgilerinizi girin, size özel promptlar oluşturalım ve harika videolar üretelim.</p>
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Creative Scene Designer</h1>
+            <p class="text-gray-400 max-w-2xl mx-auto">Create AI-powered videos. Enter a prompt for the video you want to create, let's generate prompts and produce amazing videos.</p>
         </header>
 
         <div class="max-w-3xl mx-auto card rounded-xl shadow-2xl overflow-hidden">
             <div class="p-6">
                 <form id="brandForm" class="mb-6">
                     <div class="mb-4">
-                        <label for="brandInput" class="block text-gray-300 mb-2 font-medium">Marka/Ürün Bilgileri</label>
-                        <textarea id="brandInput" name="brand_input" rows="4" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="Markanız veya ürününüz hakkında detaylı bilgi verin..."></textarea>
+                        <label for="brandInput" class="block text-gray-300 mb-2 font-medium"></label>
+                        <textarea id="brandInput" name="brand_input" rows="4" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100" placeholder="Oluşturmak istediğiniz video için bir prompt girin."></textarea>
                     </div>
                     
                     <button id="generateBtn" type="submit" class="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
@@ -354,12 +396,22 @@
                         </div>
                     </div>
                     
-                    <!-- Video oluştur butonu -->
-                    <div class="mt-6">
-                        <button class="create-video-btn w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                            Seçili Prompt ile Video Oluştur
-                        </button>
-                        <p class="text-gray-400 text-sm mt-2 text-center">Önce bir prompt seçin, sonra bu butona tıklayarak video oluşturun</p>
+                    <!-- Video oluştur butonu ve süre seçimi -->
+                    <div class="mt-6 flex items-center gap-4">
+                        <div class="flex-grow">
+                            <button class="create-video-btn w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg shadow-lg hover:from-purple-700 hover:to-pink-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
+                                Seçili Prompt ile Video Oluştur
+                            </button>
+                        </div>
+                        <div class="w-32">
+                            <label class="block text-gray-300 text-sm mb-1">Video Süresi</label>
+                            <select id="videoDuration" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="5s" selected>5 saniye</option>
+                                <option value="6s">6 saniye</option>
+                                <option value="7s">7 saniye</option>
+                                <option value="8s">8 saniye</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -374,7 +426,7 @@
         </div>
         
         <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2025 Hızlı Video Oluşturucu | AI Destekli Video Üretim Aracı</p>
+            <p>© 2025 | Agentic Creative Suite</p>
         </footer>
     </div>
 

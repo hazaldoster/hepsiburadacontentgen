@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hızlı Görsel Üretici</title>
+    <title>Creative Product Visual Maker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             color: #fff;
+            padding-top: 60px; /* Add padding for fixed tab bar */
         }
         .gradient-text {
             background: linear-gradient(90deg, #ff6b6b, #ffa1a1, #ffc6c6);
@@ -317,10 +319,33 @@
         #extractedImagesGrid img {
             cursor: zoom-in;
         }
+        /* Tab Bar Styles */
+        .tab-bar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button:hover {
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
     </style>
     <script src="{{ url_for('static', filename='js/scrape.do.js') }}"></script>
 </head>
 <body class="text-gray-100 min-h-screen">
+    <!-- Tab Bar -->
+    <div class="tab-bar fixed top-0 left-0 w-full z-50 px-4 py-3">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex-1"></div>
+            <a href="/library" class="tab-button flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#ff6b6b] to-[#ffc6c6] hover:opacity-90">
+                <i class="ri-gallery-line text-lg"></i>
+                <span class="font-medium">Library</span>
+            </a>
+        </div>
+    </div>
     <div class="container mx-auto px-4 py-8">
         <div class="flex items-center mb-6">
             <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
@@ -332,8 +357,8 @@
         </div>
 
         <header class="mb-12 text-center">
-            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Hızlı Görsel Üretici</h1>
-            <p class="text-gray-400 max-w-2xl mx-auto">Web sitesi URL'sini girin, yapay zeka sizin için özel promptlar oluştursun ve etkileyici görseller üretsin.</p>
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Creative Product Visual Maker</h1>
+            <p class="text-gray-400 max-w-2xl mx-auto">Enter HepsiBurada.com URL, let artificial intelligence create custom prompts for you and produce impressive scenes.</p>
         </header>
 
         <div class="max-w-6xl mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
@@ -378,7 +403,7 @@
         </div>
         
         <footer class="mt-12 text-center text-gray-500 text-sm">
-            <p>© 2025 Hızlı Görsel Üretici | AI Destekli Görsel Üretim Aracı</p>
+            <p>© 2025 | Agentic Creative Suite</p>
         </footer>
     </div>
 
@@ -709,7 +734,7 @@
             }
         }
 
-        // Make functions globally available
+        // Mevcut fonksiyonları global yapmak
         window.showModal = showModal;
         window.closeModal = closeModal;
         window.submitImageSelection = submitImageSelection;
@@ -758,6 +783,173 @@
                 <span>Görseli İndir</span>
             `;
             
+            // Create video conversion button
+            const videoButton = document.createElement('button');
+            videoButton.className = 'mt-4 w-full bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105';
+            videoButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Videoya Dönüştür</span>
+            `;
+            
+            videoButton.onclick = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Önce modalı kapat
+                const parentModal = modalImage ? modalImage.closest('.fixed') : document.getElementById('imageModal');
+                if (parentModal) {
+                    parentModal.style.opacity = '0';
+                    const parentContent = parentModal.querySelector('.relative');
+                    if (parentContent) {
+                        parentContent.classList.remove('scale-100');
+                        parentContent.classList.add('scale-95');
+                    }
+                    setTimeout(() => parentModal.remove(), 300);
+                }
+                
+                // Video container'ı oluştur veya var olan container'ı bul
+                let generatedVideoContainer = document.getElementById('generatedVideoContainer');
+                if (!generatedVideoContainer) {
+                    // generatedImagesContainer'ı bul
+                    const generatedImagesContainer = document.getElementById('generatedImagesContainer');
+                    if (!generatedImagesContainer) {
+                        console.error('generatedImagesContainer bulunamadı!');
+                        return;
+                    }
+                    
+                    // generatedVideoContainer'ı oluştur
+                    generatedVideoContainer = document.createElement('div');
+                    generatedVideoContainer.id = 'generatedVideoContainer';
+                    generatedVideoContainer.className = 'mt-8';
+                    generatedVideoContainer.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-4 text-purple-400">Oluşturulan Video</h3>
+                        <div id="generatedVideoGrid" class="grid grid-cols-1 gap-4"></div>
+                    `;
+                    
+                    // Video container'ı ekle
+                    generatedImagesContainer.parentNode.insertBefore(generatedVideoContainer, generatedImagesContainer.nextSibling);
+                }
+                
+                // Video elementini oluştur veya güncelle
+                const videoGrid = document.getElementById('generatedVideoGrid');
+                
+                // Yükleme animasyonunu ekle
+                videoGrid.innerHTML = `
+                    <div class="relative border-2 border-transparent rounded-lg overflow-hidden bg-gray-800 p-8 flex flex-col items-center justify-center min-h-[300px]">
+                        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+                        <p class="text-gray-300 text-center">Video oluşturuluyor... Bu işlem birkaç dakika sürebilir.</p>
+                    </div>
+                `;
+                
+                // Sayfayı video konteynırına doğru kaydır
+                generatedVideoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                try {
+                    // Backend'e istek at
+                    const response = await fetch('/image-to-video', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            image_url: imageUrl
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Video dönüştürme işlemi başarısız oldu');
+                    }
+                    
+                    if (data.success && data.video_url) {
+                        // Başarılı video dönüştürme işlemi
+                        console.log('✅ Video başarıyla oluşturuldu:', data.video_url);
+                        
+                        // Video kartını oluştur
+                        const videoCard = document.createElement('div');
+                        videoCard.className = 'relative border-2 border-transparent rounded-lg overflow-hidden bg-gray-800 p-4';
+                        
+                        // Video elementini oluştur
+                        const videoElement = document.createElement('video');
+                        videoElement.src = data.video_url;
+                        videoElement.controls = true;
+                        videoElement.autoplay = true;
+                        videoElement.loop = true;
+                        videoElement.muted = false;
+                        videoElement.className = 'max-w-full rounded-lg shadow-lg mb-4 mx-auto object-contain';
+                        videoElement.style = 'max-height: 400px;';
+                        
+                        // İndirme butonu oluştur
+                        const downloadButton = document.createElement('button');
+                        downloadButton.className = 'px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg flex items-center justify-center space-x-2 transition-all duration-200 hover:scale-105';
+                        downloadButton.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span>Videoyu İndir</span>
+                        `;
+                        
+                        // İndirme fonksiyonunu ekle
+                        downloadButton.onclick = async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            try {
+                                const response = await fetch(data.video_url);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `generated-video.mp4`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                                
+                                console.log('✅ Video başarıyla indirildi');
+                            } catch (error) {
+                                console.error('❌ Video indirme hatası:', error);
+                                alert('Video indirilirken bir hata oluştu');
+                            }
+                        };
+                        
+                        // Buton container oluştur (ortalamak için)
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'flex flex-col items-center';
+                        buttonContainer.appendChild(downloadButton);
+                        
+                        // Video kartına elementleri ekle
+                        videoCard.appendChild(videoElement);
+                        videoCard.appendChild(buttonContainer);
+                        
+                        // Grid'e video kartını ekle
+                        videoGrid.innerHTML = ''; // Yükleme animasyonunu kaldır
+                        videoGrid.appendChild(videoCard);
+                    } else {
+                        throw new Error('Video URL alınamadı');
+                    }
+                } catch (error) {
+                    console.error('❌ Video dönüştürme hatası:', error);
+                    
+                    // Hata mesajını video grid içinde göster
+                    videoGrid.innerHTML = `
+                        <div class="relative border-2 border-transparent rounded-lg overflow-hidden bg-gray-800 p-8 flex flex-col items-center justify-center min-h-[150px]">
+                            <div class="text-red-400 text-center">
+                                <svg class="h-12 w-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <p class="font-semibold mb-2">Video oluşturulamadı</p>
+                                <p class="text-sm">${error.message}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+            
+            // Add download functionality to download button
             downloadButton.onclick = async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -780,6 +972,12 @@
                     alert('Görsel indirilirken bir hata oluştu');
                 }
             };
+            
+            // Create buttons container for horizontal layout
+            const buttonsContainer = document.createElement('div');
+            buttonsContainer.className = 'flex space-x-2 mt-4';
+            buttonsContainer.appendChild(downloadButton);
+            buttonsContainer.appendChild(videoButton);
 
             // Add keyboard event listener for closing modal with Escape key
             const handleKeyDown = (e) => {
@@ -792,7 +990,7 @@
 
             // Assemble modal
             imageContainer.appendChild(modalImage);
-            imageContainer.appendChild(downloadButton);
+            imageContainer.appendChild(buttonsContainer);
             modalContent.appendChild(closeButton);
             modalContent.appendChild(imageContainer);
             modalContainer.appendChild(modalContent);

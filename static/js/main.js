@@ -110,15 +110,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Promptları oluşturma işlemi
         loadingPrompts.classList.remove('hidden');
         
+        // Seçilen aspect ratio değerini al
+        const selectedAspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+        
         // Yeni API endpoint'ine istek at
-        fetch('/generate-prompt', {
+        fetch('/generate-prompt-2', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 text: brandInput,
-                feature_type: 'video'
+                feature_type: 'video',
+                aspect_ratio: selectedAspectRatio
             })
         })
         .then(response => {
@@ -150,12 +154,222 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Prompt:', item.prompt);
                     console.log('------------------------');
                 });
+                
+                // Show the prompt results container
+                promptResults.classList.remove('hidden');
+                
+                // Clear existing prompts
+                promptContainer.innerHTML = '';
+                
+                // Add prompts to UI
+                data.prompt_data.forEach((item, index) => {
+                    const promptCard = document.createElement('div');
+                    promptCard.className = 'prompt-card bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-all relative';
+                    
+                    // Create unique IDs for the prompt content and edit areas
+                    const promptId = `prompt-${index}`;
+                    const textareaId = `textarea-${index}`;
+                    
+                    promptCard.innerHTML = `
+                        <div class="mb-2">
+                            <h3 class="font-medium text-purple-300">${item.style || 'Style ' + (index + 1)}</h3>
+                        </div>
+                        <div class="prompt-content" id="${promptId}">
+                            <p class="text-gray-300">${item.prompt}</p>
+                        </div>
+                        <div class="prompt-edit hidden" id="${textareaId}">
+                            <textarea class="w-full bg-gray-700 text-gray-300 p-2 rounded mb-2" rows="5">${item.prompt}</textarea>
+                            <div class="flex justify-center space-x-2">
+                                <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    İptal
+                                </button>
+                                <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Kaydet
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-center">
+                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors" data-index="${index}">
+                                Düzenle
+                            </button>
+                        </div>
+                    `;
+                    
+                    promptContainer.appendChild(promptCard);
+                    
+                    // Add click event for the prompt content
+                    const promptContent = promptCard.querySelector(`#${promptId}`);
+                    promptContent.addEventListener('click', function(e) {
+                        // Make sure we don't trigger this when editing
+                        if (!e.target.closest('.prompt-edit') && !e.target.closest('.edit-btn')) {
+                            selectPromptCard(promptCard);
+                        }
+                    });
+                    
+                    // Add edit button functionality
+                    const editBtn = promptCard.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Show edit mode
+                        const promptContent = document.getElementById(promptId);
+                        const promptEdit = document.getElementById(textareaId);
+                        
+                        promptContent.classList.add('hidden');
+                        promptEdit.classList.remove('hidden');
+                    });
+                    
+                    // Add cancel button functionality
+                    const cancelBtn = promptCard.querySelector('.cancel-btn');
+                    cancelBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Hide edit mode
+                        const promptContent = document.getElementById(promptId);
+                        const promptEdit = document.getElementById(textareaId);
+                        
+                        promptContent.classList.remove('hidden');
+                        promptEdit.classList.add('hidden');
+                        
+                        // Restore original content
+                        const textarea = promptEdit.querySelector('textarea');
+                        textarea.value = item.prompt;
+                    });
+                    
+                    // Add save button functionality
+                    const saveBtn = promptCard.querySelector('.save-btn');
+                    saveBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Get new prompt value
+                        const textarea = document.querySelector(`#${textareaId} textarea`);
+                        const newPrompt = textarea.value.trim();
+                        
+                        if (newPrompt) {
+                            // Update prompt value
+                            item.prompt = newPrompt;
+                            
+                            // Update displayed content
+                            const promptContent = document.getElementById(promptId);
+                            promptContent.querySelector('p').textContent = newPrompt;
+                            
+                            // Hide edit mode
+                            promptContent.classList.remove('hidden');
+                            document.getElementById(textareaId).classList.add('hidden');
+                        }
+                    });
+                });
             } else if (data.prompts && data.prompts.length > 0) {
                 console.log('\n📝 Generated Prompts:');
                 data.prompts.forEach((prompt, index) => {
                     console.log(`\nPrompt ${index + 1}:`);
                     console.log(prompt);
                     console.log('------------------------');
+                });
+                
+                // Show the prompt results container
+                promptResults.classList.remove('hidden');
+                
+                // Clear existing prompts
+                promptContainer.innerHTML = '';
+                
+                // Add prompts to UI
+                data.prompts.forEach((prompt, index) => {
+                    const promptCard = document.createElement('div');
+                    promptCard.className = 'prompt-card bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700 transition-all relative';
+                    
+                    // Create unique IDs for the prompt content and edit areas
+                    const promptId = `prompt-simple-${index}`;
+                    const textareaId = `textarea-simple-${index}`;
+                    
+                    promptCard.innerHTML = `
+                        <div class="mb-2">
+                            <h3 class="font-medium text-purple-300">Style ${index + 1}</h3>
+                        </div>
+                        <div class="prompt-content" id="${promptId}">
+                            <p class="text-gray-300">${prompt}</p>
+                        </div>
+                        <div class="prompt-edit hidden" id="${textareaId}">
+                            <textarea class="w-full bg-gray-700 text-gray-300 p-2 rounded mb-2" rows="5">${prompt}</textarea>
+                            <div class="flex justify-center space-x-2">
+                                <button class="cancel-btn bg-gray-600 hover:bg-gray-500 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    İptal
+                                </button>
+                                <button class="save-btn bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1 rounded transition-colors" data-index="${index}">
+                                    Kaydet
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-center">
+                            <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors" data-index="${index}">
+                                Düzenle
+                            </button>
+                        </div>
+                    `;
+                    
+                    promptContainer.appendChild(promptCard);
+                    
+                    // Add click event for the prompt content
+                    const promptContent = promptCard.querySelector(`#${promptId}`);
+                    promptContent.addEventListener('click', function(e) {
+                        // Make sure we don't trigger this when editing
+                        if (!e.target.closest('.prompt-edit') && !e.target.closest('.edit-btn')) {
+                            selectPromptCard(promptCard);
+                        }
+                    });
+                    
+                    // Add edit button functionality  
+                    const editBtn = promptCard.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Show edit mode
+                        const promptContent = document.getElementById(promptId);
+                        const promptEdit = document.getElementById(textareaId);
+                        
+                        promptContent.classList.add('hidden');
+                        promptEdit.classList.remove('hidden');
+                    });
+                    
+                    // Add cancel button functionality
+                    const cancelBtn = promptCard.querySelector('.cancel-btn');
+                    cancelBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Hide edit mode
+                        const promptContent = document.getElementById(promptId);
+                        const promptEdit = document.getElementById(textareaId);
+                        
+                        promptContent.classList.remove('hidden');
+                        promptEdit.classList.add('hidden');
+                        
+                        // Restore original content
+                        const textarea = promptEdit.querySelector('textarea');
+                        textarea.value = prompt;
+                    });
+                    
+                    // Add save button functionality
+                    const saveBtn = promptCard.querySelector('.save-btn');
+                    saveBtn.addEventListener('click', function(e) {
+                        e.stopPropagation(); // Prevent selecting the card
+                        
+                        // Get new prompt value
+                        const textarea = document.querySelector(`#${textareaId} textarea`);
+                        const newPrompt = textarea.value.trim();
+                        
+                        if (newPrompt) {
+                            // Update prompt value in the data array
+                            data.prompts[index] = newPrompt;
+                            
+                            // Update displayed content
+                            const promptContent = document.getElementById(promptId);
+                            promptContent.querySelector('p').textContent = newPrompt;
+                            
+                            // Hide edit mode
+                            promptContent.classList.remove('hidden');
+                            document.getElementById(textareaId).classList.add('hidden');
+                        }
+                    });
                 });
             } else {
                 console.log('No prompts were generated');
@@ -168,58 +382,89 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    function generateVideo(prompt, brandInput) {
-        // Seçilen prompt ile video oluştur
-        promptResults.classList.add('hidden'); // Prompt sonuçlarını gizle
-        videoLoading.classList.remove('hidden');
+    function createVideo(prompt, brandInput) {
+        // Seçilen aspect ratio ve süreyi al
+        const selectedAspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
+        const selectedDuration = document.getElementById('videoDuration').value;
         
+        // Video yükleme ekranını göster
+        document.getElementById('promptResults').classList.add('hidden');
+        document.getElementById('videoLoading').classList.remove('hidden');
+
+        // Form verilerini oluştur
         const formData = new FormData();
         formData.append('prompt', prompt);
         formData.append('brand_input', brandInput);
-        
+        formData.append('aspect_ratio', selectedAspectRatio);
+        formData.append('duration', selectedDuration);
+
+        // Video oluşturma isteği gönder
         fetch('/generate_video', {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            videoLoading.classList.add('hidden');
-            
             if (data.error) {
-                alert('Hata: ' + data.error);
-                promptResults.classList.remove('hidden');
-                return;
+                throw new Error(data.error);
             }
-            
-            // Video oluşturulduğunda video.html sayfasına yönlendir
+            // Video sayfasına yönlendir
             window.location.href = `/video?video_url=${encodeURIComponent(data.video_url)}&prompt=${encodeURIComponent(data.prompt)}&brand=${encodeURIComponent(data.brand_input)}`;
         })
         .catch(error => {
-            videoLoading.classList.add('hidden');
-            promptResults.classList.remove('hidden');
             console.error('Video oluşturma hatası:', error);
-            alert('Bir hata oluştu: ' + error.message);
+            alert('Video oluşturulurken bir hata oluştu: ' + error.message);
+            // Hata durumunda yükleme ekranını gizle ve prompt sonuçlarını tekrar göster
+            document.getElementById('videoLoading').classList.add('hidden');
+            document.getElementById('promptResults').classList.remove('hidden');
         });
     }
     
-    // Sayfada "Oluştur" butonuna tıklandığında seçili prompt ile video oluştur
+    // Aspect ratio seçimi için
+    function updateSelectedAspectRatio() {
+        const aspectRatioInputs = document.querySelectorAll('.aspect-ratio-input');
+        const aspectRatioOptions = document.querySelectorAll('.aspect-ratio-option');
+        
+        aspectRatioOptions.forEach(option => {
+            const input = option.querySelector('input');
+            if (input.checked) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+        });
+        
+        // Her bir radio input için event listener ekle
+        aspectRatioInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                aspectRatioOptions.forEach(option => {
+                    const optionInput = option.querySelector('input');
+                    if (optionInput.checked) {
+                        option.classList.add('selected');
+                    } else {
+                        option.classList.remove('selected');
+                    }
+                });
+            });
+        });
+    }
+    
+    // "Seçili Prompt ile Video Oluştur" butonuna tıklama olayı ekle
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('create-video-btn')) {
+        if (e.target.closest('.create-video-btn')) {
+            e.preventDefault();
+            
             if (!selectedPromptCard) {
                 alert('Lütfen önce bir prompt seçin');
                 return;
             }
             
-            // Seçilen prompt ile video oluştur
+            // Seçilen prompt ve aspect ratio değerlerini al
             const promptContent = selectedPromptCard.querySelector('.prompt-content p');
+            const aspectRatio = document.querySelector('input[name="aspectRatio"]:checked').value;
             const brandInputValue = document.getElementById('brandInput').value;
             
-            generateVideo(promptContent.textContent, brandInputValue);
+            createVideo(promptContent.textContent, brandInputValue);
         }
     });
 
@@ -322,4 +567,4 @@ async function fetchImages(url) {
         console.error('Error fetching images:', error);
         throw error;
     }
-} 
+}
