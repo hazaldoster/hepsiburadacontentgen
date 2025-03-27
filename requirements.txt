@@ -6,6 +6,7 @@ urllib3==1.26.15
 Pillow==9.5.0
 gunicorn==21.2.0
 beautifulsoup4==4.12.2
+supabase==1.0.3
 # Replacing problematic packages
 # fal-client==0.1.0 may be causing issues
 # scrapeapi-client may be causing issues 
