@@ -24,7 +24,8 @@ RUN pip install --upgrade pip setuptools wheel && \
      pip install urllib3==1.26.15 && \
      pip install Pillow==9.5.0 && \
      pip install gunicorn==21.2.0 && \
-     pip install openai==1.3.0)
+     pip install openai==1.3.0 && \
+     pip install beautifulsoup4==4.12.2)
 
 # Copy package.json and install Node dependencies
 COPY package.json .
