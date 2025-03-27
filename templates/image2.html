@@ -13,7 +13,6 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             color: #fff;
-            padding-top: 60px; /* Add padding for fixed tab bar */
         }
         .gradient-text {
             background: linear-gradient(90deg, #ff6b6b, #ffa1a1, #ffc6c6);
@@ -256,40 +255,16 @@
                 background-position: 200% center;
             }
         }
-        /* Tab Bar Styles */
-        .tab-bar {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .tab-button {
-            transition: all 0.3s ease;
-        }
-        .tab-button:hover {
-            transform: translateY(-2px);
-            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-        }
     </style>
 </head>
 <body class="text-gray-100 min-h-screen">
-    <!-- Tab Bar -->
-    <div class="tab-bar fixed top-0 left-0 w-full z-50 px-4 py-3">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex-1"></div>
-            <a href="/library" class="tab-button flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#ff6b6b] to-[#ffc6c6] hover:opacity-90">
-                <i class="ri-gallery-line text-lg"></i>
-                <span class="font-medium">Library</span>
-            </a>
-        </div>
-    </div>
-
     <div class="container mx-auto px-4 py-8">
         <div class="flex items-center mb-6">
             <a href="{{ url_for('welcome') }}" class="text-white text-sm hover:underline flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Ana Sayfa
+                Home Page
             </a>
         </div>
 
@@ -570,12 +545,12 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            Ana Sayfa
+                            Home Page
                         </a>
                     </div>
 
                     <header class="mb-12 text-center">
-                        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Yaratıcı Görsel Üretici</h1>
+                        <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 mb-2">Creative Video-Image Maker</h1>
                         <p class="text-gray-400 max-w-2xl mx-auto">AI destekli görseller oluşturun. Oluşturmak istediğiniz görseller için bir prompt girin, promptlar oluşturalım ve harika görseller üretelim.</p>
                     </header>
 
@@ -1010,6 +985,7 @@
                     formData.append('brand_input', brandInput);
                     formData.append('aspect_ratio', aspectRatio);
                     formData.append('redirect', 'false');
+                    formData.append('content_type', 'video-image');
                     
                     fetch('/generate_image_2', {
                         method: 'POST',

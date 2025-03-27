@@ -397,6 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('brand_input', brandInput);
         formData.append('aspect_ratio', selectedAspectRatio);
         formData.append('duration', selectedDuration);
+        formData.append('content_type', 'creative-scene');  // Add content_type for index.html
 
         // Video oluşturma isteği gönder
         fetch('/generate_video', {

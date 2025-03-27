@@ -220,7 +220,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Ana Sayfa
+                Home Page
             </a>
         </div>
 
@@ -417,6 +417,7 @@
                 formData.append('brand_input', brand);
                 formData.append('aspect_ratio', aspectRatio);
                 formData.append('duration', duration);
+                formData.append('content_type', 'creative-scene');
                 
                 // API isteği gönder
                 fetch('/generate_video', {

@@ -21,6 +21,7 @@ from PIL import Image
 import io
 import re
 from datetime import datetime
+from supabase import create_client
 
 # Data structure to store generated content
 generated_content = []
@@ -295,20 +296,99 @@ def generate_prompt(text: str, feature_type: str) -> dict:
         logger.error(f"Hata izleme: {traceback.format_exc()}")
         raise ValueError(f"Prompt oluşturulurken hata: {str(e)}")
 
-def store_generated_content(url: str, content_type: str, prompt: str = None, brand: str = None):
-    """Store generated content in the global content list."""
-    global generated_content
-    content_item = {
-        "url": url,
-        "type": content_type,  # 'image' or 'video'
-        "prompt": prompt if prompt else "No prompt provided",
-        "brand": brand if brand else None,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    generated_content.insert(0, content_item)  # Add to start of list (newest first)
-    # Keep only the last 100 items to prevent unlimited growth
-    if len(generated_content) > 100:
-        generated_content.pop()
+# Initialize Supabase client
+SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://vsczjwvmkqustdbxyvzo.supabase.co')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzY3pqd3Zta3F1c3RkYnh5dnpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU5NjQsImV4cCI6MjA1NzQ1MTk2NH0.7tlRgk0sPXHZnmbnvPyOkEHT-ptJMK8BGvINY-5YPds')
+
+try:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    logger.info("Supabase client initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Supabase client: {str(e)}")
+    supabase = None
+
+def fetch_generations_from_db(limit=100, offset=0):
+    """Fetch generations from Supabase database."""
+    try:
+        if not supabase:
+            logger.error("Supabase client not initialized")
+            return []
+            
+        response = supabase.table('generations') \
+            .select("*") \
+            .order('created_at', desc=True) \
+            .limit(limit) \
+            .offset(offset) \
+            .execute()
+            
+        # Process the data to ensure all required fields are present
+        processed_data = []
+        for item in response.data:
+            processed_item = {
+                'id': item.get('id'),
+                'url': item.get('url'),
+                'type': item.get('type', ''),  # Media type (image/video)
+                'content_type': item.get('content_type', ''),  # Section type (creative-scene/product-visual/video-image)
+                'prompt': item.get('prompt', 'No prompt provided'),
+                'created_at': item.get('created_at')
+            }
+            
+            # Format the date if present
+            if processed_item['created_at']:
+                if isinstance(processed_item['created_at'], str):
+                    created_at = datetime.fromisoformat(processed_item['created_at'].replace('Z', '+00:00'))
+                else:
+                    created_at = processed_item['created_at']
+                processed_item['date'] = created_at.strftime("%Y-%m-%d %H:%M:%S")
+            
+            processed_data.append(processed_item)
+            
+        return processed_data
+    except Exception as e:
+        logger.error(f"Error fetching generations from database: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return []
+
+def store_generated_content(url, content_type, type, prompt=None):
+    """Store generated content in the database."""
+    try:
+        if not url or not content_type or not type:
+            raise ValueError("URL, content_type, and type are required")
+
+        # Validate content type
+        valid_content_types = ['product-visual', 'creative-scene', 'video-image']
+        if content_type not in valid_content_types:
+            raise ValueError(f"Invalid content_type. Must be one of: {', '.join(valid_content_types)}")
+
+        # Validate media type
+        valid_types = ['image', 'video']
+        if type not in valid_types:
+            raise ValueError(f"Invalid type. Must be one of: {', '.join(valid_types)}")
+
+        # Log incoming data
+        app.logger.info(f"Storing content: url={url}, content_type={content_type}, type={type}, prompt={prompt}")
+
+        # Prepare data for insertion
+        data = {
+            'url': url,
+            'content_type': content_type,
+            'type': type,
+            'prompt': prompt,
+            'created_at': datetime.now().isoformat()
+        }
+
+        # Insert into database
+        response = supabase.table('generations').insert(data).execute()
+        
+        if hasattr(response, 'error') and response.error is not None:
+            raise Exception(f"Database error: {response.error}")
+
+        return response.data[0] if response.data else None
+
+    except Exception as e:
+        app.logger.error(f"Error storing content: {str(e)}")
+        app.logger.error(traceback.format_exc())
+        raise
 
 @app.route('/')
 def welcome():
@@ -364,6 +444,7 @@ def generate_video():
     brand_input = request.form.get('brand_input')
     aspect_ratio = request.form.get('aspect_ratio', '9:16')  # Varsayılan olarak 9:16
     duration = request.form.get('duration', '8s')  # Yeni: frontend'den süre değerini al
+    content_type = request.form.get('content_type', 'creative-scene')  # Default to creative-scene for index.html/video.html
     
     if not prompt:
         return jsonify({"error": "Geçersiz prompt seçimi"}), 400
@@ -378,6 +459,7 @@ def generate_video():
         logger.info(f"Kullanılan prompt: {prompt[:50]}...")  # İlk 50 karakteri logla
         logger.info(f"Kullanılan aspect ratio: {aspect_ratio}")
         logger.info(f"Kullanılan süre: {duration}")
+        logger.info(f"Content type: {content_type}")
         
         # Fal.ai Veo2 API'si ile video oluştur
         try:
@@ -437,7 +519,8 @@ def generate_video():
             # Store the generated video in our library
             store_generated_content(
                 url=video_url,
-                content_type="video",
+                content_type=content_type,  # Use the content_type from request
+                type="video",
                 prompt=prompt
             )
             
@@ -501,7 +584,8 @@ def generate_video():
                 # Store the generated video in our library
                 store_generated_content(
                     url=video_url,
-                    content_type="video",
+                    content_type=content_type,  # Use the content_type from request
+                    type="video",
                     prompt=prompt
                 )
                 
@@ -679,11 +763,15 @@ def extract_images():
 def generate_image():
     try:
         data = request.get_json()
-        prompt_data = data.get('prompt_data')  # This should be a list of prompts
+        prompt_data = data.get('prompt_data')
         image_url = data.get('image_url')
+        content_type = data.get('content_type', 'product-visual')  # Default to product-visual if not specified
 
         if not prompt_data or not isinstance(prompt_data, list):
             return jsonify({"error": "Prompt verisi gerekli ve liste formatında olmalı"}), 400
+
+        if content_type not in ['product-visual', 'video-image']:
+            return jsonify({"error": "Invalid content type. Must be 'product-visual' or 'video-image'"}), 400
 
         if not FAL_CLIENT_AVAILABLE:
             return jsonify({"error": "fal.ai client kütüphanesi yüklü değil"}), 500
@@ -738,11 +826,19 @@ def generate_image():
                     continue
 
                 # Store the generated image in our library
-                store_generated_content(
-                    url=generated_image_url,
-                    content_type="image",
-                    prompt=prompt
-                )
+                try:
+                    store_generated_content(
+                        url=generated_image_url,
+                        content_type=content_type,
+                        type="image",
+                        prompt=prompt
+                    )
+                    logger.info(f"✅ {idx}. görsel başarıyla veritabanına kaydedildi")
+                except Exception as storage_error:
+                    logger.error(f"❌ {idx}. görsel veritabanına kaydedilemedi: {str(storage_error)}")
+                    # Continue with the process even if storage fails
+                    # We'll still show the image to the user
+                    pass
 
                 generated_images.append({
                     "scene": scene,
@@ -1043,6 +1139,7 @@ def check_image_status(prompt_id):
         prompt = request.args.get('prompt', '')
         brand = request.args.get('brand', '')
         aspect_ratio = request.args.get('aspect_ratio', '1:1')  # Aspect ratio bilgisini al
+    #    content_type = request.args.get('content_type', 'video-image')  # Changed default to video-image
         
         # API bilgilerini al
         api_key = os.getenv("ASTRIA_API_KEY")
@@ -1101,7 +1198,8 @@ def check_image_status(prompt_id):
                     for url in image_urls:
                         store_generated_content(
                             url=url,
-                            content_type="image",
+                            content_type="video-image",
+                            type="image",
                             prompt=prompt
                         )
                 
@@ -1133,6 +1231,7 @@ def check_image_status(prompt_id):
                     "prompt": prompt,
                     "brand": brand,
                     "aspect_ratio": aspect_ratio  # Aspect ratio bilgisini ekle
+         #            "content_type": content_type  # Add content_type to response
                 })
             except json.JSONDecodeError:
                 logger.error(f"Astria API yanıtı JSON formatında değil: {response.text[:100]}...")
@@ -1150,6 +1249,7 @@ def generate_image_2():
     brand_input = request.form.get('brand_input')
     aspect_ratio = request.form.get('aspect_ratio', '1:1')  # Varsayılan olarak 1:1
     redirect_to_page = request.form.get('redirect', 'false').lower() == 'true'  # Yönlendirme seçeneği
+    content_type = request.form.get('content_type', 'video-image')  # Changed default to video-image
     
     if not prompt:
         return jsonify({"error": "Geçersiz prompt seçimi"}), 400
@@ -1158,6 +1258,7 @@ def generate_image_2():
         logger.info(f"Astria AI API'sine görsel oluşturma isteği gönderiliyor")
         logger.info(f"Kullanılan prompt: {prompt[:50]}...")  # İlk 50 karakteri logla
         logger.info(f"Kullanılan aspect ratio: {aspect_ratio}")
+   #      logger.info(f"Content type: {content_type}")
         
         # API URL'sini kontrol et - Flux API'sini kullanacağız
         api_key = os.getenv("ASTRIA_API_KEY")
@@ -1288,8 +1389,9 @@ def generate_image_2():
                     # Store each generated image in our library
                     for url in image_urls:
                         store_generated_content(
-                            url=url,
-                            content_type="image",
+                           url=url,
+                            content_type= content_type,  # Use the content_type from request
+                            type="image",
                             prompt=prompt
                         )
                 
@@ -1353,11 +1455,15 @@ def image_to_video():
     try:
         data = request.get_json()
         image_url = data.get("image_url")
+        content_type = data.get("content_type", "product-visual")  # Default to product-visual if not specified
         
         if not image_url:
             logger.error("Missing required parameter 'image_url' in image_to_video")
             return jsonify({"error": "Missing required parameter: 'image_url'"}), 400
-        
+            
+        if content_type not in ['product-visual', 'video-image']:
+            return jsonify({"error": "Invalid content type. Must be 'product-visual' or 'video-image'"}), 400
+
         logger.info(f"Görüntü videoya dönüştürülüyor: {image_url[:100]}...")
         
         # Fal.ai client'ın kullanılabilir olup olmadığını kontrol et
@@ -1509,8 +1615,9 @@ def image_to_video():
             # Store the generated video in our library
             store_generated_content(
                 url=video_url,
-                content_type="video",
-                prompt=prompt
+                content_type=content_type,
+                type="video",
+                prompt=prompt if prompt else None
             )
             
             # Video sayfasına yönlendir
@@ -1533,12 +1640,28 @@ def image_to_video():
         logger.error(f"Hata izleme: {traceback.format_exc()}")
         return jsonify({"error": f"İşlem başarısız oldu: {str(e)}"}), 500
 
-# Add error handlers
 @app.route('/library')
 def library():
-    """Display the content library page."""
-    global generated_content
-    return render_template('library.html', media_items=generated_content)
+    """Display the content library page with data from Supabase."""
+    try:
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        offset = (page - 1) * per_page
+        
+        # Fetch data from Supabase
+        media_items = fetch_generations_from_db(limit=per_page, offset=offset)
+        
+        # Log the data being sent to template
+        logger.info(f"Sending {len(media_items)} items to library template")
+        for item in media_items:
+            logger.info(f"Item: type={item.get('type')}, content_type={item.get('content_type')}, url={item.get('url')}")
+        
+        return render_template('library.html', media_items=media_items)
+    except Exception as e:
+        logger.error(f"Error in library route: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        return render_template('library.html', media_items=[], error=str(e))
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -1549,6 +1672,39 @@ def page_not_found(e):
 def internal_server_error(e):
     logger.error(f"500 error: {str(e)}")
     return render_template('error.html', error="Internal server error"), 500
+
+@app.route('/delete-generation/<generation_id>', methods=['DELETE'])
+def delete_generation(generation_id):
+    """Delete a generation from the database."""
+    try:
+        if not supabase:
+            return jsonify({"error": "Database connection not available"}), 500
+            
+        # Validate UUID format
+        try:
+            # Convert string to UUID to validate format
+            uuid_obj = uuid.UUID(generation_id)
+        except ValueError:
+            logger.error(f"Invalid UUID format: {generation_id}")
+            return jsonify({"error": "Invalid generation ID format"}), 400
+            
+        # Delete the record
+        response = supabase.table('generations') \
+            .delete() \
+            .eq('id', str(uuid_obj)) \
+            .execute()
+            
+        if response and response.data:
+            logger.info(f"Successfully deleted generation {generation_id}")
+            return jsonify({"success": True})
+        else:
+            logger.error(f"No generation found with ID {generation_id}")
+            return jsonify({"error": "Generation not found"}), 404
+            
+    except Exception as e:
+        logger.error(f"Error deleting generation {generation_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     logger.info("Uygulama başlatılıyor...")
