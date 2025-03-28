@@ -297,30 +297,50 @@ def generate_prompt(text: str, feature_type: str) -> dict:
         raise ValueError(f"Prompt oluşturulurken hata: {str(e)}")
 
 # Initialize Supabase client
-SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://vsczjwvmkqustdbxyvzo.supabase.co')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzY3pqd3Zta3F1c3RkYnh5dnpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE4NzU5NjQsImV4cCI6MjA1NzQ1MTk2NH0.7tlRgk0sPXHZnmbnvPyOkEHT-ptJMK8BGvINY-5YPds')
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
+logger.info(f"SUPABASE_URL present: {bool(SUPABASE_URL)}")
+logger.info(f"SUPABASE_KEY present: {bool(SUPABASE_KEY)}")
+
+supabase = None
 try:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    logger.info("Supabase client initialized successfully")
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        logger.error("Supabase credentials not found in environment variables")
+        logger.error("Please make sure SUPABASE_URL and SUPABASE_KEY are set")
+    else:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        logger.info("Supabase client initialized successfully")
+        
+        # Test connection by querying the database
+        logger.info("Testing Supabase connection...")
+        test_response = supabase.table('generations').select("*").limit(1).execute()
+        logger.info(f"Supabase connection test successful! Found {len(test_response.data if test_response.data else [])} records")
 except Exception as e:
     logger.error(f"Failed to initialize Supabase client: {str(e)}")
+    logger.error(f"Error type: {type(e).__name__}")
+    logger.error(f"Error details: {traceback.format_exc()}")
     supabase = None
 
 def fetch_generations_from_db(limit=100, offset=0):
     """Fetch generations from Supabase database."""
     try:
+        logger.info(f"Fetching generations from database (limit: {limit}, offset: {offset})")
+        
         if not supabase:
             logger.error("Supabase client not initialized")
             return []
-            
+        
+        logger.info("Sending select query to Supabase...")
         response = supabase.table('generations') \
             .select("*") \
             .order('created_at', desc=True) \
             .limit(limit) \
             .offset(offset) \
             .execute()
-            
+        
+        logger.info(f"Received response from Supabase with {len(response.data if response.data else [])} records")
+        
         # Process the data to ensure all required fields are present
         processed_data = []
         for item in response.data:
@@ -335,14 +355,19 @@ def fetch_generations_from_db(limit=100, offset=0):
             
             # Format the date if present
             if processed_item['created_at']:
-                if isinstance(processed_item['created_at'], str):
-                    created_at = datetime.fromisoformat(processed_item['created_at'].replace('Z', '+00:00'))
-                else:
-                    created_at = processed_item['created_at']
-                processed_item['date'] = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                try:
+                    if isinstance(processed_item['created_at'], str):
+                        created_at = datetime.fromisoformat(processed_item['created_at'].replace('Z', '+00:00'))
+                    else:
+                        created_at = processed_item['created_at']
+                    processed_item['date'] = created_at.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as date_error:
+                    logger.error(f"Error formatting date: {str(date_error)}")
+                    processed_item['date'] = "Unknown date"
             
             processed_data.append(processed_item)
-            
+        
+        logger.info(f"Processed {len(processed_data)} records from database")
         return processed_data
     except Exception as e:
         logger.error(f"Error fetching generations from database: {str(e)}")
@@ -353,20 +378,28 @@ def store_generated_content(url, content_type, type, prompt=None):
     """Store generated content in the database."""
     try:
         if not url or not content_type or not type:
+            logger.error(f"Missing required parameters: url={url}, content_type={content_type}, type={type}")
             raise ValueError("URL, content_type, and type are required")
 
         # Validate content type
         valid_content_types = ['product-visual', 'creative-scene', 'video-image']
         if content_type not in valid_content_types:
+            logger.error(f"Invalid content_type: {content_type}. Must be one of: {', '.join(valid_content_types)}")
             raise ValueError(f"Invalid content_type. Must be one of: {', '.join(valid_content_types)}")
 
         # Validate media type
         valid_types = ['image', 'video']
         if type not in valid_types:
+            logger.error(f"Invalid type: {type}. Must be one of: {', '.join(valid_types)}")
             raise ValueError(f"Invalid type. Must be one of: {', '.join(valid_types)}")
 
+        # Check if Supabase client is initialized
+        if not supabase:
+            logger.error("Supabase client is not initialized. Cannot store content.")
+            return None
+
         # Log incoming data
-        app.logger.info(f"Storing content: url={url}, content_type={content_type}, type={type}, prompt={prompt}")
+        logger.info(f"Storing content: url={url}, content_type={content_type}, type={type}, prompt={prompt[:50] if prompt else None}...")
 
         # Prepare data for insertion
         data = {
@@ -377,18 +410,27 @@ def store_generated_content(url, content_type, type, prompt=None):
             'created_at': datetime.now().isoformat()
         }
 
+        logger.info(f"Prepared data for insertion: {data}")
+
         # Insert into database
+        logger.info("Sending insert request to Supabase...")
         response = supabase.table('generations').insert(data).execute()
         
+        logger.info(f"Insert response from Supabase: {response}")
+        
         if hasattr(response, 'error') and response.error is not None:
+            logger.error(f"Supabase error during insertion: {response.error}")
             raise Exception(f"Database error: {response.error}")
 
+        logger.info(f"Successfully stored content in database. Response data: {response.data[0] if response.data else None}")
         return response.data[0] if response.data else None
 
     except Exception as e:
-        app.logger.error(f"Error storing content: {str(e)}")
-        app.logger.error(traceback.format_exc())
-        raise
+        logger.error(f"Error storing content: {str(e)}")
+        logger.error(traceback.format_exc())
+        # Don't raise the exception, just log it and return None
+        # This way, even if storing fails, the rest of the application can continue
+        return None
 
 @app.route('/')
 def welcome():
@@ -665,6 +707,32 @@ def debug():
         "templates": [f for f in os.listdir(template_dir) if os.path.isfile(os.path.join(template_dir, f))] if os.path.exists(template_dir) else []
     }
     return jsonify(debug_info)
+
+@app.route('/debug/env')
+def debug_env():
+    """Debug endpoint to check environment variables"""
+    # Create a safe version of environment variables (only show presence, not values)
+    env_info = {
+        "SUPABASE_URL_present": bool(os.getenv("SUPABASE_URL")),
+        "SUPABASE_KEY_present": bool(os.getenv("SUPABASE_KEY")),
+        "FAL_API_KEY_present": bool(os.getenv("FAL_API_KEY")),
+        "FAL_KEY_present": bool(os.getenv("FAL_KEY")),
+        "OPENAI_API_KEY_present": bool(os.getenv("OPENAI_API_KEY")),
+        "FLASK_ENV": os.getenv("FLASK_ENV"),
+        "PORT": os.getenv("PORT"),
+        "supabase_initialized": supabase is not None,
+        "FAL_CLIENT_AVAILABLE": FAL_CLIENT_AVAILABLE
+    }
+    
+    # Also check if env variables have correct format
+    if os.getenv("SUPABASE_URL"):
+        env_info["SUPABASE_URL_format_valid"] = os.getenv("SUPABASE_URL").startswith("https://") and ".supabase.co" in os.getenv("SUPABASE_URL")
+    
+    if os.getenv("SUPABASE_KEY"):
+        key = os.getenv("SUPABASE_KEY")
+        env_info["SUPABASE_KEY_format_valid"] = len(key) > 50 and "." in key
+    
+    return jsonify(env_info)
 
 # Initialize scrape.do configuration
 SCRAPE_DO_API_KEY = os.getenv("SCRAPE_DO_API_KEY")
@@ -1644,18 +1712,35 @@ def image_to_video():
 def library():
     """Display the content library page with data from Supabase."""
     try:
+        logger.info("Library route accessed")
+        
+        # Check if Supabase is initialized
+        if not supabase:
+            logger.error("Supabase client not initialized in library route. Cannot fetch data.")
+            return render_template('library.html', media_items=[], error="Database connection not available")
+        
         # Get pagination parameters
         page = request.args.get('page', 1, type=int)
         per_page = 20
         offset = (page - 1) * per_page
         
+        logger.info(f"Fetching page {page} with {per_page} items per page (offset: {offset})")
+        
         # Fetch data from Supabase
+        logger.info("Calling fetch_generations_from_db...")
         media_items = fetch_generations_from_db(limit=per_page, offset=offset)
         
         # Log the data being sent to template
-        logger.info(f"Sending {len(media_items)} items to library template")
-        for item in media_items:
-            logger.info(f"Item: type={item.get('type')}, content_type={item.get('content_type')}, url={item.get('url')}")
+        logger.info(f"Fetch completed. Retrieved {len(media_items)} items for library template")
+        
+        if not media_items:
+            logger.warning("No media items found in the database")
+            
+        for i, item in enumerate(media_items[:5]):  # Log only the first 5 items to avoid overly large logs
+            logger.info(f"Item {i+1}: id={item.get('id')}, type={item.get('type')}, content_type={item.get('content_type')}, url={item.get('url')[:50]}")
+        
+        if len(media_items) > 5:
+            logger.info(f"... and {len(media_items) - 5} more items")
         
         return render_template('library.html', media_items=media_items)
     except Exception as e:
