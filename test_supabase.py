@@ -5,6 +5,8 @@ import dotenv
 from time import time
 from datetime import datetime
 import uuid
+import inspect
+import pkg_resources
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,6 +26,10 @@ try:
     from supabase import create_client
     logger.info("✅ Supabase client library imported successfully")
     
+    # Check Supabase version
+    supabase_version = pkg_resources.get_distribution("supabase").version
+    logger.info(f"✅ Supabase version: {supabase_version}")
+    
     # Get credentials from environment
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
@@ -39,10 +45,26 @@ try:
     supabase = create_client(supabase_url, supabase_key)
     logger.info("✅ Supabase client initialized successfully")
     
+    # Check available methods on the SelectRequestBuilder
+    logger.info("Checking available methods on the query builder...")
+    
     # Test connection by querying the database
     logger.info("Testing database connection by querying generations table...")
+    query_builder = supabase.table('generations').select("*").limit(1)
+    
+    # Check if offset method exists
+    has_offset_method = hasattr(query_builder, 'offset')
+    logger.info(f"✅ Offset method available: {has_offset_method}")
+    
+    # Continue with a compatible query based on available methods
     start_time = time()
-    response = supabase.table('generations').select("*").limit(1).execute()
+    if has_offset_method:
+        logger.info("Using offset method...")
+        response = query_builder.offset(0).execute()
+    else:
+        logger.info("Offset method not available, using basic query...")
+        response = query_builder.execute()
+    
     request_duration = time() - start_time
     
     logger.info(f"✅ Database query successful! Response time: {request_duration:.2f} seconds")
@@ -97,4 +119,8 @@ except ImportError as e:
     sys.exit(1)
 except Exception as e:
     logger.error(f"❌ Error during Supabase test: {str(e)}")
+    logger.error(f"Full error details: {str(e)}")
+    logger.error(f"Error type: {type(e).__name__}")
+    import traceback
+    logger.error(f"Traceback: {traceback.format_exc()}")
     sys.exit(1) 

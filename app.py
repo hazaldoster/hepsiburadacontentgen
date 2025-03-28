@@ -331,13 +331,43 @@ def fetch_generations_from_db(limit=100, offset=0):
             logger.error("Supabase client not initialized")
             return []
         
-        logger.info("Sending select query to Supabase...")
-        response = supabase.table('generations') \
-            .select("*") \
-            .order('created_at', desc=True) \
-            .limit(limit) \
-            .offset(offset) \
-            .execute()
+        logger.info("Building Supabase query...")
+        query = supabase.table('generations').select("*").order('created_at', desc=True).limit(limit)
+        
+        # Check if the offset method is available (depends on Supabase version)
+        try:
+            logger.info("Trying to use offset method...")
+            has_offset = hasattr(query, 'offset')
+            
+            if has_offset:
+                logger.info(f"Offset method available, using offset {offset}...")
+                response = query.offset(offset).execute()
+            else:
+                logger.info("Offset method not available, using alternative pagination...")
+                # For older versions, get more records and slice manually
+                larger_response = query.execute()
+                
+                # Get data and manually apply offset
+                data = larger_response.data if larger_response.data else []
+                if len(data) > offset:
+                    # Slice the data to simulate offset+limit
+                    larger_response.data = data[offset:offset+limit]
+                else:
+                    larger_response.data = []
+                    
+                response = larger_response
+        except AttributeError as e:
+            logger.warning(f"Offset method error: {str(e)}")
+            logger.info("Falling back to basic query without offset...")
+            response = query.execute()
+            
+            # Get data and manually apply offset
+            data = response.data if response.data else []
+            if len(data) > offset:
+                # Slice the data to simulate offset+limit
+                response.data = data[offset:offset+limit]
+            else:
+                response.data = []
         
         logger.info(f"Received response from Supabase with {len(response.data if response.data else [])} records")
         
