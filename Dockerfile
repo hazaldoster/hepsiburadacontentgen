@@ -26,7 +26,8 @@ RUN pip install --upgrade pip setuptools wheel && \
      pip install gunicorn==21.2.0 && \
      pip install openai==1.3.0 && \
      pip install beautifulsoup4==4.12.2 && \
-     pip install supabase==1.0.3)
+     pip install supabase==1.0.3 && \
+     pip install fal-client==0.5.9)
 
 # Copy package.json and install Node dependencies
 COPY package.json .
